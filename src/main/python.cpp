@@ -74,6 +74,9 @@ int main(int argc, char *argv[]) {
   if (!module.empty()) {
     settings["python_module"] = module;
   }
+  if (!settings["period"].is_null()) {
+    time = chrono::milliseconds(settings["period"].get<size_t>());
+  }
 
   PythonInterpreter py(settings, settings["python_module"].get<string>());
 
