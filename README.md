@@ -2,7 +2,7 @@
 
 ## Compilation
 
-You need to have Python3 installed. Then:
+You need to have `python3` and `python3-dev` installed. Then:
 
 ```sh
 python3 -m venv .venv
@@ -15,6 +15,7 @@ cmake --build build -j6
 sudo cmake --install build
 ```
 
+The above is tested on MacOS and Ubuntu 22.04.
 
 ## Executing
 
