@@ -81,6 +81,7 @@ include_directories(
   ${toml_SOURCE_DIR}/include
   ${rang_SOURCE_DIR}/include
   ${cxxopts_SOURCE_DIR}/include
+  ${json_SOURCE_DIR}/include
 )
 
 
@@ -92,31 +93,22 @@ if (APPLE)
 else()
   set(CMAKE_INSTALL_RPATH "\$ORIGIN/../lib;/usr/local/lib")
 endif()
-include_directories(${json_SOURCE_DIR}/include)
 add_definitions(-DINSTALL_PREFIX="${CMAKE_INSTALL_PREFIX}")
-
 
 add_executable(python_agent ${SRC_DIR}/main/python.cpp)
 target_link_libraries(python_agent PRIVATE cppy3 zmqpp-static zmq snappy)
 set_target_properties(python_agent PROPERTIES
-  OUTPUT_NAME mads_python
+  OUTPUT_NAME mads-python
 )
+list(APPEND TARGET_LIST python_agent)
 
 
 # INSTALL ######################################################################
 if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
   set_property(CACHE CMAKE_INSTALL_PREFIX PROPERTY VALUE ${USR_DIR})
 endif()
-if(APPLE)
-  install(TARGETS ${TARGET_LIST}
-    LIBRARY DESTINATION lib
-    RUNTIME DESTINATION lib
-    ARCHIVE DESTINATION lib
-  )
-else()
-  install(TARGETS ${TARGET_LIST}
-    LIBRARY DESTINATION lib
-    RUNTIME DESTINATION bin
-    ARCHIVE DESTINATION lib
-  )
-endif()
+install(TARGETS ${TARGET_LIST}
+  LIBRARY DESTINATION lib
+  RUNTIME DESTINATION bin
+  ARCHIVE DESTINATION lib
+)
