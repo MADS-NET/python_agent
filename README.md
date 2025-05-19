@@ -10,7 +10,7 @@ source .venv/bin/activate
 pip install numpy
 # also install other necessary Python libs
 
-cmake -Bbuild -DCMAKE_INSTALL_PREFIX=$(mads -i)
+cmake -Bbuild -DCMAKE_INSTALL_PREFIX=$(mads -p)
 cmake --build build -j6
 sudo cmake --install build
 ```
