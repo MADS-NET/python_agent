@@ -1,20 +1,20 @@
 /*
-  _____                    _       _       
- |_   _|__ _ __ ___  _ __ | | __ _| |_ ___ 
+  _____                    _       _
+ |_   _|__ _ __ ___  _ __ | | __ _| |_ ___
    | |/ _ \ '_ ` _ \| '_ \| |/ _` | __/ _ \
    | |  __/ | | | | | |_) | | (_| | ||  __/
    |_|\___|_| |_| |_| .__/|_|\__,_|\__\___|
-                    |_|                    
+                    |_|
 A template executable
 
 Author(s): Paolo Bosetti
 */
-#include <mads.hpp>
+#include "../python_interpreter.hpp"
 #include <agent.hpp>
-#include <cxxopts.hpp>
 #include <cppy3/cppy3.hpp>
 #include <cppy3/utils.hpp>
-#include "../python_interpreter.hpp"
+#include <cxxopts.hpp>
+#include <mads.hpp>
 
 using namespace std;
 using namespace cxxopts;
@@ -59,15 +59,18 @@ int main(int argc, char *argv[]) {
     exit(EXIT_FAILURE);
   }
   agent.enable_remote_control();
-  agent.connect(); 
+  agent.connect();
   agent.register_event(event_type::startup);
   agent.info();
 
   json settings = agent.get_settings();
-  if (settings["python_module"].is_null() && options_parsed.count("module") == 0) {
-    std::cerr << fg::red << "Python module not specified in settings not in command line" << fg::reset << endl;
+  if (settings["python_module"].is_null() &&
+      options_parsed.count("module") == 0) {
+    std::cerr << fg::red
+              << "Python module not specified in settings not in command line"
+              << fg::reset << endl;
     exit(EXIT_FAILURE);
-  } 
+  }
   if (!module.empty()) {
     settings["python_module"] = module;
   }
@@ -81,27 +84,28 @@ int main(int argc, char *argv[]) {
 
   // SOURCE
   if (py.agent_type() == "source") {
-    cppy3::Var result;
+    string result;
     json out;
     agent.loop([&]() {
       try {
-        result = cppy3::eval("mads.get_output()");
-        out = json::parse(result.toString());
+        result =
+            cppy3::WideToUTF8(cppy3::eval("mads.get_output()").toString());
+        out = json::parse(result);
       } catch (cppy3::PythonException &e) {
-        cerr << fg::red << "Error running get_output(): " << e.what() << fg::reset
-        << endl;
+        cerr << fg::red << "Error running get_output(): " << e.what()
+              << fg::reset << endl;
         return;
-      }
-      catch (json::parse_error &e) {
+      } catch (json::parse_error &e) {
         cerr << fg::red << "Error parsing JSON: " << e.what() << fg::reset
-             << endl
-             << "JSON was: " << cppy3::WideToUTF8(result.toString()) << endl;
+              << endl
+              << "JSON was: " << result << endl;
         return;
       }
       agent.publish(out);
-    }, time);
+    },
+    time);
 
-  // FILTER
+    // FILTER
   } else if (py.agent_type() == "filter") {
     message_type type;
     auto msg = agent.last_message();
@@ -128,15 +132,15 @@ int main(int argc, char *argv[]) {
           return;
         } catch (json::parse_error &e) {
           cerr << fg::red << "Error parsing JSON: " << e.what() << fg::reset
-              << endl
-              << "JSON was: " << cppy3::WideToUTF8(result.toString()) << endl;
+               << endl
+               << "JSON was: " << cppy3::WideToUTF8(result.toString()) << endl;
           return;
         }
         agent.publish(out);
       }
     });
 
-  // SINK
+    // SINK
   } else if (py.agent_type() == "sink") {
     message_type type;
     auto msg = agent.last_message();
