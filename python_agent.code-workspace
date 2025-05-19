@@ -1,0 +1,22 @@
+{
+	"folders": [
+		{
+			"path": "."
+		}
+	],
+	"settings": {
+		"files.associations": {
+			"*.h": "c",
+			"*.rmd": "markdown",
+			"*.hh": "c++",
+			"optional": "cpp",
+			"regex": "cpp",
+			"vector": "cpp",
+			"map": "cpp",
+			"bitset": "cpp",
+			"set": "cpp",
+			"unordered_map": "cpp",
+			"unordered_set": "cpp"
+		}
+	}
+}
