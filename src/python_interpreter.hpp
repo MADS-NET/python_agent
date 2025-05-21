@@ -37,6 +37,15 @@ public:
     for (auto &path : _default_paths) {
       cppy3::exec("sys.path.append('" + path + "')");
     }
+    for (auto &path : _params["search_paths"]) {
+      if (path.is_string()) {
+        cppy3::exec("sys.path.append('" + path.get<string>() + "')");
+      } else if (path.is_array()) {
+        for (auto &p : path) {
+          cppy3::exec("sys.path.append('" + p.get<string>() + "')");
+        }
+      }
+    }
     try {
       cppy3::exec("import " + _python_module + " as mads");
     } catch (cppy3::PythonException &e) {

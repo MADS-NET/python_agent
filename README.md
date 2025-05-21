@@ -29,14 +29,28 @@ mads python -n python_source -m source -p100
 
 The Python modules are searched for in the following folders:
 
-* `"./python"`
-* `"./scripts"`
-* `"../python"`
-* `"../scripts"`
-* `"../../python"`
-* `"../../scripts"`
-* `INSTALL_PREFIX + "/python"` 
-* `INSTALL_PREFIX + "/scripts"`
+* `./python`
+* `./scripts`
+* `../python`
+* `../scripts`
+* `../../python`
+* `../../scripts`
+* `INSTALL_PREFIX + /python` 
+* `INSTALL_PREFIX + /scripts`
+
+plus any path listed in the `mads.ini` file under the `search_path` key (an array or a single string).
+
+## `mads.ini` section
+
+The following fields are typically used:
+
+```ini
+[python_source]
+period = 200
+venv = "/path/to/.venv"
+python_module = "my_source"
+search_paths = ["/path/to/python/folder"]
+``` 
 
 ## Module Types
 

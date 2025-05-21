@@ -40,9 +40,6 @@ int main(int argc, char *argv[]) {
   if (options_parsed.count("module") != 0) {
     module = options_parsed["module"].as<string>();
   }
-  if (options_parsed.count("p") != 0) {
-    time = chrono::milliseconds(options_parsed["p"].as<size_t>());
-  }
   if (options_parsed.count("name") != 0) {
     agent_name = options_parsed["name"].as<string>();
   } else {
@@ -76,6 +73,10 @@ int main(int argc, char *argv[]) {
   }
   if (!settings["period"].is_null()) {
     time = chrono::milliseconds(settings["period"].get<size_t>());
+  }
+  /// CLI overrides
+  if (options_parsed.count("p") != 0) {
+    time = chrono::milliseconds(options_parsed["p"].as<size_t>());
   }
 
   PythonInterpreter py(settings, settings["python_module"].get<string>());
