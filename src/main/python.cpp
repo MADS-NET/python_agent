@@ -115,6 +115,7 @@ int main(int argc, char *argv[]) {
     auto msg = agent.last_message();
     json in, out;
     cppy3::Var result;
+    string load_topic, load_data;
     agent.loop([&]() {
       try {
         type = agent.receive();
@@ -127,6 +128,16 @@ int main(int argc, char *argv[]) {
       agent.remote_control();
       if (type == message_type::json && agent.last_topic() != "control") {
         in = json::parse(get<1>(msg));
+        load_topic = "mads.topic = '" + agent.last_topic() + "'";
+        load_data = "mads.data = " + in.dump();
+        try {
+          cppy3::exec(load_topic);
+          cppy3::exec(load_data);
+        } catch (cppy3::PythonException &e) {
+          cerr << fg::red << "Error loading data: " << e.what() << fg::reset
+               << endl;
+          return;
+        }
         try {
           result = cppy3::eval("mads.process()");
           out = json::parse(result.toString());
