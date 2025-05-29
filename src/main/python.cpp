@@ -129,7 +129,7 @@ int main(int argc, char *argv[]) {
       if (type == message_type::json && agent.last_topic() != "control") {
         in = json::parse(get<1>(msg));
         load_topic = "mads.topic = '" + agent.last_topic() + "'";
-        load_data = "mads.data = " + in.dump();
+        load_data = "mads.data = '" + in.dump() + "'";
         try {
           cppy3::exec(load_topic);
           cppy3::exec(load_data);
