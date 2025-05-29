@@ -20,5 +20,7 @@ def setup():
 def process():
   print("[Python] Processing data from topic '" + topic + "'...")
   print("[Python] port: ", state["port"])
+  print("[Python] data:", data)
   data["processed"] = True
+  print("[Python] data:", data)
   return json.dumps(data)

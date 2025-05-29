@@ -90,31 +90,32 @@ int main(int argc, char *argv[]) {
   if (py.agent_type() == "source") {
     string result;
     json out;
-    agent.loop([&]() {
-      try {
-        result =
-            cppy3::WideToUTF8(cppy3::eval("mads.get_output()").toString());
-        out = json::parse(result);
-      } catch (cppy3::PythonException &e) {
-        cerr << fg::red << "Error running get_output(): " << e.what()
-              << fg::reset << endl;
-        return;
-      } catch (json::parse_error &e) {
-        cerr << fg::red << "Error parsing JSON: " << e.what() << fg::reset
-              << endl
-              << "JSON was: " << result << endl;
-        return;
-      }
-      agent.publish(out);
-    },
-    time);
+    agent.loop(
+        [&]() {
+          try {
+            result =
+                cppy3::WideToUTF8(cppy3::eval("mads.get_output()").toString());
+            out = json::parse(result);
+          } catch (cppy3::PythonException &e) {
+            cerr << fg::red << "Error running get_output(): " << e.what()
+                 << fg::reset << endl;
+            return;
+          } catch (json::parse_error &e) {
+            cerr << fg::red << "Error parsing JSON: " << e.what() << fg::reset
+                 << endl
+                 << "JSON was: " << result << endl;
+            return;
+          }
+          agent.publish(out);
+        },
+        time);
 
     // FILTER
   } else if (py.agent_type() == "filter") {
     message_type type;
     auto msg = agent.last_message();
-    json in, out;
-    cppy3::Var result;
+    json out;
+    string result;
     string load_topic, load_data;
     agent.loop([&]() {
       try {
@@ -127,20 +128,17 @@ int main(int argc, char *argv[]) {
       msg = agent.last_message();
       agent.remote_control();
       if (type == message_type::json && agent.last_topic() != "control") {
-        in = json::parse(get<1>(msg));
-        load_topic = "mads.topic = '" + agent.last_topic() + "'";
-        load_data = "mads.data = '" + in.dump() + "'";
         try {
-          cppy3::exec(load_topic);
-          cppy3::exec(load_data);
+          cppy3::exec("mads.topic = '" + agent.last_topic() + "'");
+          cppy3::exec("mads.data = json.loads('" + get<1>(msg) + "')");
         } catch (cppy3::PythonException &e) {
           cerr << fg::red << "Error loading data: " << e.what() << fg::reset
                << endl;
           return;
         }
         try {
-          result = cppy3::eval("mads.process()");
-          out = json::parse(result.toString());
+          result = cppy3::WideToUTF8(cppy3::eval("mads.process()").toString());
+          out = json::parse(result);
         } catch (cppy3::PythonException &e) {
           cerr << fg::red << "Error running process(): " << e.what()
                << fg::reset << endl;
@@ -148,7 +146,7 @@ int main(int argc, char *argv[]) {
         } catch (json::parse_error &e) {
           cerr << fg::red << "Error parsing JSON: " << e.what() << fg::reset
                << endl
-               << "JSON was: " << cppy3::WideToUTF8(result.toString()) << endl;
+               << "JSON was: " << result << endl;
           return;
         }
         agent.publish(out);
@@ -171,7 +169,14 @@ int main(int argc, char *argv[]) {
       msg = agent.last_message();
       agent.remote_control();
       if (type == message_type::json && agent.last_topic() != "control") {
-        in = json::parse(get<1>(msg));
+        try {
+          cppy3::exec("mads.topic = '" + agent.last_topic() + "'");
+          cppy3::exec("mads.data = json.loads('" + get<1>(msg) + "')");
+        } catch (cppy3::PythonException &e) {
+          cerr << fg::red << "Error loading data: " << e.what() << fg::reset
+               << endl;
+          return;
+        }
         try {
           cppy3::exec("mads.deal_with_data()");
         } catch (cppy3::PythonException &e) {

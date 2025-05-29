@@ -19,5 +19,5 @@ def setup():
 # The function must return a JSON string.
 def get_output():
   data = {"list": [1, 2, 3, 4]}
-  data["processed"] = True
+  data["processed"] = False
   return json.dumps(data)
