@@ -131,7 +131,7 @@ int main(int argc, char *argv[]) {
           result = cppy3::eval("mads.process()");
           out = json::parse(result.toString());
         } catch (cppy3::PythonException &e) {
-          cerr << fg::red << "Error running deal_with_data(): " << e.what()
+          cerr << fg::red << "Error running process(): " << e.what()
                << fg::reset << endl;
           return;
         } catch (json::parse_error &e) {
