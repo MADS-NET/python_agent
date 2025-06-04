@@ -17,7 +17,7 @@ message(STATUS "CMAKE_BUILD_TYPE: ${CMAKE_BUILD_TYPE}")
 message(STATUS "CMAKE_INSTALL_PREFIX: ${CMAKE_INSTALL_PREFIX}") 
 
 # PROJECT SETTINGS #############################################################
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(SRC_DIR ${CMAKE_CURRENT_LIST_DIR}/src)
 
@@ -96,7 +96,11 @@ endif()
 add_definitions(-DINSTALL_PREFIX="${CMAKE_INSTALL_PREFIX}")
 
 add_executable(python_agent ${SRC_DIR}/main/python.cpp)
-target_link_libraries(python_agent PRIVATE cppy3 zmqpp-static zmq snappy)
+if(MSVC)
+   target_link_libraries(python_agent PRIVATE cppy3 zmqpp-static libzmq-v143-mt-s-4_3_6 snappy Ws2_32 bcrypt Secur32 Crypt32 Dnsapi IPHLPAPI)
+else()
+  target_link_libraries(python_agent PRIVATE cppy3 zmqpp-static zmq snappy)
+endif()
 set_target_properties(python_agent PROPERTIES
   OUTPUT_NAME mads-python
 )

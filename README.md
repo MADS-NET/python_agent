@@ -2,20 +2,45 @@
 
 ## Compilation
 
+### UNIX
+
 You need to have `python3` and `python3-dev` installed. Then:
 
 ```sh
 python3 -m venv .venv
 source .venv/bin/activate
 pip install numpy
+pip install pyserial
 # also install other necessary Python libs
 
-cmake -Bbuild -DCMAKE_INSTALL_PREFIX=$(mads -p)
+cmake -Bbuild -DCMAKE_INSTALL_PREFIX="$(mads -p)"
 cmake --build build -j6
 sudo cmake --install build
 ```
 
 The above is tested on MacOS and Ubuntu 22.04.
+
+### Windows
+
+Run the following from project root:
+
+```powershell
+python -m venv .venv
+.venv\Scripts\activate
+pip install numpy
+```
+
+Then: 
+
+```powershell
+cmake -Bbuild -DCMAKE_INSTALL_PREFIX="$(mads -p)"
+cmake --build build --config Release
+sudo cmake --install build
+```
+
+Then you can just type `mads-python -h`.
+
+**Note**: for `sudo` to work on Windows, you need to enable it on *Settings > System > For Developers* and set *Enable sudo* to On.
 
 ## Executing
 
