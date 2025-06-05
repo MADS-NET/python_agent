@@ -10,7 +10,6 @@ You need to have `python3` and `python3-dev` installed. Then:
 python3 -m venv .venv
 source .venv/bin/activate
 pip install numpy
-pip install pyserial
 # also install other necessary Python libs
 
 cmake -Bbuild -DCMAKE_INSTALL_PREFIX="$(mads -p)"
