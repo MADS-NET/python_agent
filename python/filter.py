@@ -22,9 +22,10 @@ def setup():
 # It has access to the dictionaries `data` , `state` and `params`, and to the
 # string `topic`.
 def process():
-  print("[Python] Processing data from topic '" + topic + "'...")
-  print("[Python] port: ", state["port"])
-  print("[Python] data:", data)
+  # print("[Python] Processing data from topic '" + topic + "'...")
+  # print("[Python] port: ", state["port"])
+  # print("[Python] data:", data)
   data["processed"] = True
-  print("[Python] data:", data)
+  data["n"] = data["n"] * 2
+  # print("[Python] data:", data)
   return json.dumps(data)

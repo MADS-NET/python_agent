@@ -17,6 +17,7 @@ agent_type = "source"
 def setup():
   print("[Python] Setting up source...")
   print("[Python] Parameters: " + json.dumps(params))
+  state["n"] = 0
 
 
 # This is a mandatory function that must be implemented in the script.
@@ -24,6 +25,7 @@ def setup():
 # It has access to the dictionaries `state` and `params`, and to the
 # string `topic`.
 def get_output():
-  data = {"list": [1, 2, 3, 4]}
+  data = {"list": [1, 2, 3, 4], "n": state["n"]}
+  state["n"] = state["n"] + 1
   data["processed"] = False
   return json.dumps(data)
