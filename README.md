@@ -74,7 +74,7 @@ period = 200
 venv = "/path/to/.venv"
 python_module = "my_source"
 search_paths = ["/path/to/python/folder"]
-``` 
+```
 
 ## Module Types
 
