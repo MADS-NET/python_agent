@@ -24,7 +24,7 @@ using json = nlohmann::json;
 int main(int argc, char *argv[]) {
   string settings_uri = SETTINGS_URI;
   chrono::milliseconds time{100};
-  string agent_name, module;
+  string agent_name;
 
   // CLI options
   Options options(argv[0]);
@@ -37,9 +37,6 @@ int main(int argc, char *argv[]) {
     ("i,agent-id", "Agent ID to be added to JSON frames", value<string>());
   SETUP_OPTIONS(options, Agent);
   // clang-format on
-  if (options_parsed.count("module") != 0) {
-    module = options_parsed["module"].as<string>();
-  }
   if (options_parsed.count("name") != 0) {
     agent_name = options_parsed["name"].as<string>();
   } else {
@@ -58,30 +55,38 @@ int main(int argc, char *argv[]) {
   agent.enable_remote_control();
   agent.connect();
   agent.register_event(event_type::startup);
-  agent.info();
-
+  
   json settings = agent.get_settings();
-  if (settings["python_module"].is_null() &&
-      options_parsed.count("module") == 0) {
-    std::cerr << fg::red
-              << "Python module not specified in settings not in command line"
-              << fg::reset << endl;
-    exit(EXIT_FAILURE);
+
+  if (!agent.attachment_path().empty()) {
+    auto dir = agent.attachment_path().parent_path();
+    settings["search_paths"].push_back(dir.string());
+    settings["python_module"] = agent.attachment_path().stem().string();
+  } 
+
+  /// CLI overrides
+  if (options_parsed.count("module") != 0) {
+    settings["python_module"] = options_parsed["module"].as<string>();
   }
-  if (!module.empty()) {
-    settings["python_module"] = module;
+  if (settings["python_module"].empty()) {
+    cerr << fg::red << "Python module not specified in settings or command line"
+    << fg::reset << endl;
+    exit(EXIT_FAILURE);
   }
   if (!settings["period"].is_null()) {
     time = chrono::milliseconds(settings["period"].get<size_t>());
   }
-  /// CLI overrides
-  if (options_parsed.count("p") != 0) {
-    time = chrono::milliseconds(options_parsed["p"].as<size_t>());
+  if (options_parsed.count("period") != 0) {
+    time = chrono::milliseconds(options_parsed["period"].as<size_t>());
   }
+  
+  // Print info
+  agent.info(cerr);
+  cerr << "  Loaded module:    " << style::bold 
+       << settings["python_module"].get<string>() << style::reset << endl;
 
+  // Instamtiate interpreter
   PythonInterpreter py(settings, settings["python_module"].get<string>());
-
-  // If needed, parse here further CLI options intended to override INI settings
 
   // Main loop
   cout << fg::green << "Python process started" << fg::reset << endl;
