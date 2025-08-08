@@ -1,12 +1,11 @@
 /*
-  _____                    _       _
- |_   _|__ _ __ ___  _ __ | | __ _| |_ ___
-   | |/ _ \ '_ ` _ \| '_ \| |/ _` | __/ _ \
-   | |  __/ | | | | | |_) | | (_| | ||  __/
-   |_|\___|_| |_| |_| .__/|_|\__,_|\__\___|
-                    |_|
-A template executable
-
+  ____        _   _                                          _   
+ |  _ \ _   _| |_| |__   ___  _ __     __ _  __ _  ___ _ __ | |_ 
+ | |_) | | | | __| '_ \ / _ \| '_ \   / _` |/ _` |/ _ \ '_ \| __|
+ |  __/| |_| | |_| | | | (_) | | | | | (_| | (_| |  __/ | | | |_ 
+ |_|    \__, |\__|_| |_|\___/|_| |_|  \__,_|\__, |\___|_| |_|\__|
+        |___/                               |___/                
+An agent that runs Python3 scripts
 Author(s): Paolo Bosetti
 */
 #include "../python_interpreter.hpp"
@@ -26,7 +25,8 @@ int main(int argc, char *argv[]) {
   chrono::milliseconds time{100};
   string agent_name;
 
-  // CLI options
+
+  // Parse command line options ================================================
   Options options(argv[0]);
   // if needed, add here further CLI options
   // clang-format off
@@ -43,7 +43,8 @@ int main(int argc, char *argv[]) {
     agent_name = "python";
   }
 
-  // Core stuff
+
+  // Initialize agent ==========================================================
   Agent agent(agent_name, settings_uri);
   try {
     agent.init();
@@ -64,7 +65,8 @@ int main(int argc, char *argv[]) {
     settings["python_module"] = agent.attachment_path().stem().string();
   } 
 
-  /// CLI overrides
+  
+  // CLI options overrides =====================================================
   if (options_parsed.count("module") != 0) {
     settings["python_module"] = options_parsed["module"].as<string>();
   }
@@ -80,15 +82,17 @@ int main(int argc, char *argv[]) {
     time = chrono::milliseconds(options_parsed["period"].as<size_t>());
   }
   
-  // Print info
+  
+  // Print info ================================================================
   agent.info(cerr);
   cerr << "  Loaded module:    " << style::bold 
        << settings["python_module"].get<string>() << style::reset << endl;
 
-  // Instamtiate interpreter
+  // Instantiate interpreter
   PythonInterpreter py(settings, settings["python_module"].get<string>());
 
-  // Main loop
+
+  // Main loop =================================================================
   cout << fg::green << "Python process started" << fg::reset << endl;
 
   // SOURCE
@@ -194,7 +198,8 @@ int main(int argc, char *argv[]) {
   }
   cout << fg::green << "Python process stopped" << fg::reset << endl;
 
-  // Cleanup
+
+  // Cleanup ===================================================================
   agent.register_event(event_type::shutdown);
   agent.disconnect();
   if (agent.restart()) {
