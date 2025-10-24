@@ -1,10 +1,10 @@
 /*
-  ____        _   _                                          _   
- |  _ \ _   _| |_| |__   ___  _ __     __ _  __ _  ___ _ __ | |_ 
+  ____        _   _                                          _
+ |  _ \ _   _| |_| |__   ___  _ __     __ _  __ _  ___ _ __ | |_
  | |_) | | | | __| '_ \ / _ \| '_ \   / _` |/ _` |/ _ \ '_ \| __|
- |  __/| |_| | |_| | | | (_) | | | | | (_| | (_| |  __/ | | | |_ 
+ |  __/| |_| | |_| | | | (_) | | | | | (_| | (_| |  __/ | | | |_
  |_|    \__, |\__|_| |_|\___/|_| |_|  \__,_|\__, |\___|_| |_|\__|
-        |___/                               |___/                
+        |___/                               |___/
 An agent that runs Python3 scripts
 Author(s): Paolo Bosetti
 */
@@ -25,7 +25,6 @@ int main(int argc, char *argv[]) {
   chrono::milliseconds time{100};
   string agent_name;
 
-
   // Parse command line options ================================================
   Options options(argv[0]);
   // if needed, add here further CLI options
@@ -43,7 +42,6 @@ int main(int argc, char *argv[]) {
     agent_name = "python";
   }
 
-
   // Initialize agent ==========================================================
   Agent agent(agent_name, settings_uri);
   try {
@@ -56,23 +54,22 @@ int main(int argc, char *argv[]) {
   agent.enable_remote_control();
   agent.connect();
   agent.register_event(event_type::startup);
-  
+
   json settings = agent.get_settings();
 
   if (!agent.attachment_path().empty()) {
     auto dir = agent.attachment_path().parent_path();
     settings["search_paths"].push_back(dir.string());
     settings["python_module"] = agent.attachment_path().stem().string();
-  } 
+  }
 
-  
   // CLI options overrides =====================================================
   if (options_parsed.count("module") != 0) {
     settings["python_module"] = options_parsed["module"].as<string>();
   }
   if (settings["python_module"].empty()) {
     cerr << fg::red << "Python module not specified in settings or command line"
-    << fg::reset << endl;
+         << fg::reset << endl;
     exit(EXIT_FAILURE);
   }
   if (!settings["period"].is_null()) {
@@ -81,16 +78,14 @@ int main(int argc, char *argv[]) {
   if (options_parsed.count("period") != 0) {
     time = chrono::milliseconds(options_parsed["period"].as<size_t>());
   }
-  
-  
+
   // Print info ================================================================
   agent.info(cerr);
-  cerr << "  Loaded module:    " << style::bold 
+  cerr << "  Loaded module:    " << style::bold
        << settings["python_module"].get<string>() << style::reset << endl;
 
   // Instantiate interpreter
   PythonInterpreter py(settings, settings["python_module"].get<string>());
-
 
   // Main loop =================================================================
   cout << fg::green << "Python process started" << fg::reset << endl;
@@ -115,7 +110,9 @@ int main(int argc, char *argv[]) {
                  << "JSON was: " << result << endl;
             return;
           }
-          agent.publish(out);
+          if (!out.empty()) {
+            agent.publish(out);
+          } 
         },
         time);
 
@@ -197,7 +194,6 @@ int main(int argc, char *argv[]) {
     });
   }
   cout << fg::green << "Python process stopped" << fg::reset << endl;
-
 
   // Cleanup ===================================================================
   agent.register_event(event_type::shutdown);
