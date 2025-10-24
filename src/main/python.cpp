@@ -94,27 +94,25 @@ int main(int argc, char *argv[]) {
   if (py.agent_type() == "source") {
     string result;
     json out;
-    agent.loop(
-        [&]() {
-          try {
-            result =
-                cppy3::WideToUTF8(cppy3::eval("mads.get_output()").toString());
-            out = json::parse(result);
-          } catch (cppy3::PythonException &e) {
-            cerr << fg::red << "Error running get_output(): " << e.what()
-                 << fg::reset << endl;
-            return;
-          } catch (json::parse_error &e) {
-            cerr << fg::red << "Error parsing JSON: " << e.what() << fg::reset
-                 << endl
-                 << "JSON was: " << result << endl;
-            return;
-          }
-          if (!out.empty()) {
-            agent.publish(out);
-          } 
-        },
-        time);
+    agent.loop([&]() {
+      try {
+        result =
+            cppy3::WideToUTF8(cppy3::eval("mads.get_output()").toString());
+        out = json::parse(result);
+      } catch (cppy3::PythonException &e) {
+        cerr << fg::red << "Error running get_output(): " << e.what()
+              << fg::reset << endl;
+        return;
+      } catch (json::parse_error &e) {
+        cerr << fg::red << "Error parsing JSON: " << e.what() << fg::reset
+              << endl
+              << "JSON was: " << result << endl;
+        return;
+      }
+      if (!out.empty()) {
+        agent.publish(out);
+      }
+    }, time);
 
     // FILTER
   } else if (py.agent_type() == "filter") {
@@ -155,7 +153,9 @@ int main(int argc, char *argv[]) {
                << "JSON was: " << result << endl;
           return;
         }
-        agent.publish(out);
+        if (!out.empty()) {
+          agent.publish(out);
+        }
       }
     });
 
