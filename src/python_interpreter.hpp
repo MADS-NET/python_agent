@@ -14,12 +14,8 @@ Common header for source, filter and sink python plugins
 #include <string>
 #include <vector>
 #include <iostream>
+#include <exec_path.hpp>
 #include <rang.hpp>
-
-#ifndef INSTALL_PREFIX
-#define INSTALL_PREFIX "/usr/local"
-#warning "INSTALL_PREFIX not defined, using /usr/local"
-#endif
 
 using namespace std;
 using namespace filesystem;
@@ -140,8 +136,8 @@ protected:
       "../scripts", 
       "../../python",
       "../../scripts", 
-      INSTALL_PREFIX "/python", 
-      INSTALL_PREFIX "/scripts"};
+      Mads::prefix() + "/python", 
+      Mads::prefix() + "/scripts"};
   // clang-format on
 };
 

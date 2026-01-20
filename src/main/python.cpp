@@ -130,6 +130,7 @@ int main(int argc, char *argv[]) {
         return;
       }
       msg = agent.last_message();
+      // agent.remote_control();
       if (type == message_type::json && agent.last_topic() != "control") {
         try {
           cppy3::exec("mads.topic = '" + agent.last_topic() + "'");
@@ -172,6 +173,7 @@ int main(int argc, char *argv[]) {
         return;
       }
       msg = agent.last_message();
+      // agent.remote_control();
       if (type == message_type::json && agent.last_topic() != "control") {
         try {
           cppy3::exec("mads.topic = '" + agent.last_topic() + "'");

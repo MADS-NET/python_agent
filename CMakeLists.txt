@@ -93,7 +93,6 @@ if (APPLE)
 else()
   set(CMAKE_INSTALL_RPATH "\$ORIGIN/../lib;/usr/local/lib")
 endif()
-add_definitions(-DINSTALL_PREFIX="${CMAKE_INSTALL_PREFIX}")
 
 add_executable(python_agent ${SRC_DIR}/main/python.cpp)
 if(MSVC)
