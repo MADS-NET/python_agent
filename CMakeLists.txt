@@ -54,7 +54,7 @@ set(BUILD_TESTING OFF CACHE INTERNAL "")
 set(JSON_BuildTests OFF CACHE INTERNAL "")
 FetchContent_Declare(json
   GIT_REPOSITORY https://github.com/nlohmann/json.git
-  GIT_TAG        v3.11.3
+  GIT_TAG        v3.12.0
   GIT_SHALLOW    TRUE
 )
 
@@ -98,7 +98,7 @@ add_executable(python_agent ${SRC_DIR}/main/python.cpp)
 if(MSVC)
    target_link_libraries(python_agent PRIVATE cppy3 zmqpp-static libzmq-v143-mt-s-4_3_6 snappy Ws2_32 bcrypt Secur32 Crypt32 Dnsapi IPHLPAPI)
 else()
-  target_link_libraries(python_agent PRIVATE cppy3 zmqpp-static zmq snappy)
+  target_link_libraries(python_agent PRIVATE cppy3 zmqpp-static zmq snappy gnutls sodium)
 endif()
 target_link_libraries(python_agent PRIVATE mads-lib)
 set_target_properties(python_agent PROPERTIES
