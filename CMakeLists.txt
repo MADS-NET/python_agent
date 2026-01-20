@@ -101,6 +101,7 @@ if(MSVC)
 else()
   target_link_libraries(python_agent PRIVATE cppy3 zmqpp-static zmq snappy)
 endif()
+target_link_libraries(python_agent PRIVATE mads-lib)
 set_target_properties(python_agent PROPERTIES
   OUTPUT_NAME mads-python
 )
