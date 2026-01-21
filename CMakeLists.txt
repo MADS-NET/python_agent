@@ -7,14 +7,7 @@
 # A MADS agent implementing a Python interpreter
 cmake_minimum_required(VERSION 3.20)
 project(python_agent VERSION 1.2.0 LANGUAGES CXX)
-if(CMAKE_BUILD_TYPE STREQUAL "")
-  set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Choose the type of build." FORCE)
-endif()
-if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
-  set_property(CACHE CMAKE_INSTALL_PREFIX PROPERTY VALUE "/usr/local")
-endif()
-message(STATUS "CMAKE_BUILD_TYPE: ${CMAKE_BUILD_TYPE}")
-message(STATUS "CMAKE_INSTALL_PREFIX: ${CMAKE_INSTALL_PREFIX}") 
+set(CMAKE_BUILD_TYPE Release CACHE STRING "Choose the type of build." FORCE)
 
 # PROJECT SETTINGS #############################################################
 set(CMAKE_CXX_STANDARD 17)
@@ -34,20 +27,25 @@ execute_process(
 message(STATUS "MADS_PREFIX: ${MADS_PREFIX}")
 include_directories(${MADS_PREFIX}/include)
 link_directories(${MADS_PREFIX}/lib)
+if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
+  set_property(CACHE CMAKE_INSTALL_PREFIX PROPERTY VALUE ${MADS_PREFIX})
+endif()
+message(STATUS "CMAKE_BUILD_TYPE: ${CMAKE_BUILD_TYPE}")
+message(STATUS "CMAKE_INSTALL_PREFIX: ${CMAKE_INSTALL_PREFIX}") 
 
 
 # DEPENDENCIES #################################################################
 include(FetchContent)
 FetchContent_Declare(cxxopts
-    GIT_REPOSITORY https://github.com/jarro2783/cxxopts.git
-    GIT_TAG        v3.1.1
-    GIT_SHALLOW    TRUE
+  GIT_REPOSITORY https://github.com/jarro2783/cxxopts.git
+  GIT_TAG        v3.1.1
+  GIT_SHALLOW    TRUE
 )
 
 FetchContent_Declare(toml
-    GIT_REPOSITORY https://github.com/pbosetti/tomlplusplus.git
-    GIT_TAG        050c7a0
-    GIT_SHALLOW    TRUE
+  GIT_REPOSITORY https://github.com/pbosetti/tomlplusplus.git
+  GIT_TAG        050c7a0
+  GIT_SHALLOW    TRUE
 )
 
 set(BUILD_TESTING OFF CACHE INTERNAL "")
@@ -66,9 +64,9 @@ FetchContent_Declare(cppy3
 
 
 FetchContent_Declare(rang
-    GIT_REPOSITORY https://github.com/agauniyal/rang.git
-    GIT_TAG        v3.2
-    GIT_SHALLOW    TRUE
+  GIT_REPOSITORY https://github.com/agauniyal/rang.git
+  GIT_TAG        v3.2
+  GIT_SHALLOW    TRUE
 )
 
 FetchContent_MakeAvailable(cxxopts toml json cppy3 rang)
@@ -95,12 +93,13 @@ else()
 endif()
 
 add_executable(python_agent ${SRC_DIR}/main/python.cpp)
-if(MSVC)
-   target_link_libraries(python_agent PRIVATE cppy3 zmqpp-static libzmq-v143-mt-s-4_3_6 snappy Ws2_32 bcrypt Secur32 Crypt32 Dnsapi IPHLPAPI)
+if(WIN32)
+  link_directories(${MADS_PREFIX}/lib ${MADS_PREFIX}/bin)
+  target_link_libraries(python_agent PRIVATE cppy3 zmqpp-static libzmq-v143-mt-s-4_3_6 snappy Ws2_32 bcrypt Secur32 Crypt32 Dnsapi IPHLPAPI madslib)
 else()
   target_link_libraries(python_agent PRIVATE cppy3 zmqpp-static zmq snappy gnutls sodium)
+  target_link_libraries(python_agent PRIVATE mads-lib)
 endif()
-target_link_libraries(python_agent PRIVATE mads-lib)
 set_target_properties(python_agent PROPERTIES
   OUTPUT_NAME mads-python
 )

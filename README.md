@@ -2,6 +2,8 @@
 
 ## Compilation
 
+**WARNING**: This version is ONLY compatible with MADS >= 2.0.0.
+
 ### UNIX
 
 You need to have `python3` and `python3-dev` installed. Then:
@@ -12,7 +14,7 @@ source .venv/bin/activate
 pip install numpy
 # also install other necessary Python libs
 
-cmake -Bbuild -DCMAKE_INSTALL_PREFIX="$(mads -p)"
+cmake -Bbuild"
 cmake --build build -j6
 sudo cmake --install build
 ```
@@ -25,16 +27,24 @@ Run the following from project root:
 
 ```powershell
 python -m venv .venv
-.venv\Scripts\activate
+.venv\Scripts\activate.ps1
 pip install numpy
 ```
 
 Then: 
 
 ```powershell
-cmake -Bbuild -DCMAKE_INSTALL_PREFIX="$(mads -p)"
+cmake -Bbuild
 cmake --build build --config Release
 sudo cmake --install build
+```
+
+Or, if you have Ninja:
+
+```powershell
+cmake -Bbuild -G Ninja
+cmake --build build -j6
+cmake --install build
 ```
 
 Then you can just type `mads-python -h`.
