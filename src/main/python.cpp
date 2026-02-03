@@ -94,7 +94,7 @@ int main(int argc, char *argv[]) {
   if (py.agent_type() == "source") {
     string result;
     json out;
-    agent.loop([&]() {
+    agent.loop([&]() -> chrono::milliseconds {
       try {
         result =
             cppy3::WideToUTF8(cppy3::eval("mads.get_output()").toString());
@@ -102,16 +102,17 @@ int main(int argc, char *argv[]) {
       } catch (cppy3::PythonException &e) {
         cerr << fg::red << "Error running get_output(): " << e.what()
               << fg::reset << endl;
-        return;
+        return 0ms;
       } catch (json::parse_error &e) {
         cerr << fg::red << "Error parsing JSON: " << e.what() << fg::reset
               << endl
               << "JSON was: " << result << endl;
-        return;
+        return 0ms;
       }
       if (!out.empty()) {
         agent.publish(out);
       }
+      return 0ms;
     }, time);
 
     // FILTER
@@ -121,13 +122,13 @@ int main(int argc, char *argv[]) {
     json out;
     string result;
     string load_topic, load_data;
-    agent.loop([&]() {
+    agent.loop([&]() -> chrono::milliseconds {
       try {
         type = agent.receive();
       } catch (const AgentError &e) {
         cerr << fg::red << "Error receiving message: " << e.what() << fg::reset
              << endl;
-        return;
+        return 0ms;
       }
       msg = agent.last_message();
       // agent.remote_control();
@@ -138,7 +139,7 @@ int main(int argc, char *argv[]) {
         } catch (cppy3::PythonException &e) {
           cerr << fg::red << "Error loading data: " << e.what() << fg::reset
                << endl;
-          return;
+          return 0ms;
         }
         try {
           result = cppy3::WideToUTF8(cppy3::eval("mads.process()").toString());
@@ -146,17 +147,18 @@ int main(int argc, char *argv[]) {
         } catch (cppy3::PythonException &e) {
           cerr << fg::red << "Error running process(): " << e.what()
                << fg::reset << endl;
-          return;
+          return 0ms;
         } catch (json::parse_error &e) {
           cerr << fg::red << "Error parsing JSON: " << e.what() << fg::reset
                << endl
                << "JSON was: " << result << endl;
-          return;
+          return 0ms;
         }
         if (!out.empty()) {
           agent.publish(out);
         }
       }
+      return 0ms;
     });
 
     // SINK
@@ -164,13 +166,13 @@ int main(int argc, char *argv[]) {
     message_type type;
     auto msg = agent.last_message();
     json in;
-    agent.loop([&]() {
+    agent.loop([&]() -> chrono::milliseconds {
       try {
         type = agent.receive();
       } catch (const AgentError &e) {
         cerr << fg::red << "Error receiving message: " << e.what() << fg::reset
              << endl;
-        return;
+        return 0ms;
       }
       msg = agent.last_message();
       // agent.remote_control();
@@ -181,16 +183,17 @@ int main(int argc, char *argv[]) {
         } catch (cppy3::PythonException &e) {
           cerr << fg::red << "Error loading data: " << e.what() << fg::reset
                << endl;
-          return;
+          return 0ms;
         }
         try {
           cppy3::exec("mads.deal_with_data()");
         } catch (cppy3::PythonException &e) {
           cerr << fg::red << "Error running deal_with_data(): " << e.what()
                << fg::reset << endl;
-          return;
+          return 0ms;
         }
       }
+      return 0ms;
     });
   }
   cout << fg::green << "Python process stopped" << fg::reset << endl;
