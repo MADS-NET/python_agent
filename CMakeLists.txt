@@ -95,10 +95,9 @@ endif()
 add_executable(python_agent ${SRC_DIR}/main/python.cpp)
 if(WIN32)
   link_directories(${MADS_PREFIX}/lib ${MADS_PREFIX}/bin)
-  target_link_libraries(python_agent PRIVATE cppy3 zmqpp-static libzmq-v143-mt-s-4_3_6 snappy Ws2_32 bcrypt Secur32 Crypt32 Dnsapi IPHLPAPI madslib)
+  target_link_libraries(python_agent PRIVATE Ws2_32 bcrypt Secur32 Crypt32 Dnsapi IPHLPAPI MadsCore)
 else()
-  target_link_libraries(python_agent PRIVATE cppy3 zmqpp-static zmq snappy gnutls sodium)
-  target_link_libraries(python_agent PRIVATE mads-lib)
+  target_link_libraries(python_agent PRIVATE cppy3 MadsCore)
 endif()
 set_target_properties(python_agent PROPERTIES
   OUTPUT_NAME mads-python
