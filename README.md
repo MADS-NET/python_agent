@@ -2,7 +2,7 @@
 
 ## Compilation
 
-**WARNING**: This version is ONLY compatible with MADS >= 2.0.0.
+> This plugin has been updated for MADS v2
 
 Note that on linux this must be compiled with Clang, not with GCC. Be sure to `sudo apt install clang` and then set clang as default with `sudo update-alternatives --config c++` and select `/usr/bin/clang++`, then repeat with `sudo update-alternatives --config cc` and select `/usr/bin/clang`.
 
