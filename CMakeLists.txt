@@ -71,6 +71,11 @@ FetchContent_Declare(rang
 
 FetchContent_MakeAvailable(cxxopts toml json cppy3 rang)
 
+if(WIN32 AND EXISTS "${CMAKE_CURRENT_LIST_DIR}/.venv/Scripts/python.exe")
+  # Prefer the repository-local virtual environment on Windows.
+  set(Python3_FIND_VIRTUALENV FIRST)
+  set(Python3_EXECUTABLE "${CMAKE_CURRENT_LIST_DIR}/.venv/Scripts/python.exe")
+endif()
 find_package(Python3 REQUIRED COMPONENTS Interpreter Development)
 include_directories(
   ${plugin_SOURCE_DIR}/src
@@ -81,6 +86,13 @@ include_directories(
   ${cxxopts_SOURCE_DIR}/include
   ${json_SOURCE_DIR}/include
 )
+if(WIN32)
+  # Prefer fetched headers over any versions shipped in MADS include paths.
+  include_directories(BEFORE
+    ${toml_SOURCE_DIR}/include
+    ${cxxopts_SOURCE_DIR}/include
+  )
+endif()
 
 
 # BUILD SETTINGS ###############################################################
@@ -94,8 +106,10 @@ endif()
 
 add_executable(python_agent ${SRC_DIR}/main/python.cpp)
 if(WIN32)
+  # Prevent legacy winsock.h declarations from conflicting with winsock2.h.
+  target_compile_definitions(python_agent PRIVATE _WINSOCKAPI_)
   link_directories(${MADS_PREFIX}/lib ${MADS_PREFIX}/bin)
-  target_link_libraries(python_agent PRIVATE Ws2_32 bcrypt Secur32 Crypt32 Dnsapi IPHLPAPI MadsCore)
+  target_link_libraries(python_agent PRIVATE cppy3 Python3::Python Ws2_32 bcrypt Secur32 Crypt32 Dnsapi IPHLPAPI MadsCore)
 else()
   target_link_libraries(python_agent PRIVATE cppy3 MadsCore)
 endif()
