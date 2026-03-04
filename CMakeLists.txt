@@ -5,7 +5,8 @@
 #  |_|    \__, |\__|_| |_|\___/|_| |_|  \__,_|\__, |\___|_| |_|\__|
 #         |___/                               |___/                
 # A MADS agent implementing a Python interpreter
-cmake_minimum_required(VERSION 3.20)
+cmake_minimum_required(VERSION 3.28)
+set(CMAKE_POLICY_VERSION_MINIMUM 3.5)
 project(python_agent VERSION 1.2.0 LANGUAGES CXX)
 set(CMAKE_BUILD_TYPE Release CACHE STRING "Choose the type of build." FORCE)
 
@@ -40,12 +41,14 @@ FetchContent_Declare(cxxopts
   GIT_REPOSITORY https://github.com/jarro2783/cxxopts.git
   GIT_TAG        v3.1.1
   GIT_SHALLOW    TRUE
+  EXCLUDE_FROM_ALL
 )
 
 FetchContent_Declare(toml
   GIT_REPOSITORY https://github.com/pbosetti/tomlplusplus.git
   GIT_TAG        050c7a0
   GIT_SHALLOW    TRUE
+  EXCLUDE_FROM_ALL
 )
 
 set(BUILD_TESTING OFF CACHE INTERNAL "")
@@ -54,12 +57,14 @@ FetchContent_Declare(json
   GIT_REPOSITORY https://github.com/nlohmann/json.git
   GIT_TAG        v3.11.3
   GIT_SHALLOW    TRUE
+  EXCLUDE_FROM_ALL
 )
 
 FetchContent_Declare(cppy3 
   GIT_REPOSITORY https://github.com/pbosetti/cppy3.git
   GIT_TAG        HEAD
   GIT_SHALLOW    TRUE
+  EXCLUDE_FROM_ALL
 )
 
 
@@ -67,6 +72,7 @@ FetchContent_Declare(rang
   GIT_REPOSITORY https://github.com/pbosetti/rang.git
   GIT_TAG        HEAD
   GIT_SHALLOW    TRUE
+  EXCLUDE_FROM_ALL
 )
 
 FetchContent_MakeAvailable(cxxopts toml json cppy3 rang)
