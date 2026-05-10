@@ -2,7 +2,7 @@ import json
 import random 
 import time
 from datetime import datetime
-import serial
+#import serial
 # import mfrc522
 
 # Specify that this is a source agent

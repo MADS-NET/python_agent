@@ -14,6 +14,8 @@ set(CMAKE_BUILD_TYPE Release CACHE STRING "Choose the type of build." FORCE)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(SRC_DIR ${CMAKE_CURRENT_LIST_DIR}/src)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
 
 if(UNIX AND NOT APPLE)
   set(LINUX TRUE)
@@ -100,6 +102,9 @@ if(WIN32)
   )
 endif()
 
+if(UNIX)
+  add_compile_options(-Wno-deprecated-literal-operator)
+endif()
 
 # BUILD SETTINGS ###############################################################
 if (APPLE)

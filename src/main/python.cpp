@@ -14,6 +14,7 @@ Author(s): Paolo Bosetti
 #include <cppy3/utils.hpp>
 #include <cxxopts.hpp>
 #include <mads.hpp>
+#include <agent_app.hpp>
 
 using namespace std;
 using namespace cxxopts;
@@ -23,37 +24,40 @@ using json = nlohmann::json;
 int main(int argc, char *argv[]) {
   string settings_uri = SETTINGS_URI;
   chrono::milliseconds time{100};
-  string agent_name;
 
-  // Parse command line options ================================================
-  Options options(argv[0]);
-  // if needed, add here further CLI options
+  AgentApp agent{argv[0], settings_uri};
   // clang-format off
-  options.add_options()
+  agent.options()
     ("p,period", "Sampling period (default 100 ms)", value<size_t>())
-    ("m,module", "Python module to load", value<string>())
-    ("n,name", "Agent name (default to 'python')", value<string>())
-    ("i,agent-id", "Agent ID to be added to JSON frames", value<string>());
-  SETUP_OPTIONS(options, Agent);
+    ("m,module", "Python module to load", value<string>());
   // clang-format on
+  agent.add_agent_identity_options();
+  agent.add_common_options();
+
+  auto options_parsed = agent.parse_options(argc, argv);
+  if (int rc = AgentApp::handle_standard_exit_options<AgentApp>(
+          options_parsed, agent.raw_options(), argv);
+      rc >= 0) {
+    return rc;
+  }
+
   if (options_parsed.count("name") != 0) {
-    agent_name = options_parsed["name"].as<string>();
+    agent.set_agent_name(options_parsed["name"].as<string>());
   } else {
-    agent_name = "python";
+    agent.set_agent_name("python");
   }
 
   // Initialize agent ==========================================================
-  Agent agent(agent_name, settings_uri);
   try {
-    agent.init();
+    agent.init(options_parsed);
   } catch (const std::exception &e) {
     std::cout << fg::red << "Error initializing agent: " << e.what()
               << fg::reset << endl;
     exit(EXIT_FAILURE);
   }
   agent.enable_remote_control();
+  agent.enable_events();
   agent.connect();
-  agent.register_event(event_type::startup);
 
   json settings = agent.get_settings();
 
@@ -199,12 +203,7 @@ int main(int argc, char *argv[]) {
   cout << fg::green << "Python process stopped" << fg::reset << endl;
 
   // Cleanup ===================================================================
-  agent.register_event(event_type::shutdown);
   agent.disconnect();
-  if (agent.restart()) {
-    auto cmd = string(MADS_PREFIX) + argv[0];
-    cout << "Restarting " << cmd << "..." << endl;
-    execvp(cmd.c_str(), argv);
-  }
+  agent.restart_if_requested(argv);
   return 0;
 }
