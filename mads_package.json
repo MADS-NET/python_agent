@@ -22,7 +22,7 @@
         "You might need to remove the quarantine protection on the plugin once installed"
       ],
       "commands": [
-        "xattr -d com.apple.quarantine $(mads -p)/bin/python_agent"
+        "xattr -d com.apple.quarantine $(mads -p)/bin/mads-python"
       ]
     }
   }
