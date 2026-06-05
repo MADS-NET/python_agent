@@ -1,3 +1,5 @@
+[![Build and Release](https://github.com/MADS-NET/python_agent/actions/workflows/release.yml/badge.svg)](https://github.com/MADS-NET/python_agent/actions/workflows/release.yml)
+
 # MADS Monolithic Python Interpreter
 
 ## Compilation
