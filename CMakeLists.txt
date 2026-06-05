@@ -22,16 +22,32 @@ if(UNIX AND NOT APPLE)
 endif()
 
 # Get MADS prefix
-execute_process(
-  COMMAND mads -p
-  OUTPUT_VARIABLE MADS_PREFIX
-  OUTPUT_STRIP_TRAILING_WHITESPACE
-)
+set(MADS_ROOT "" CACHE PATH "MADS installation prefix")
+if(MADS_ROOT)
+  set(MADS_PREFIX "${MADS_ROOT}")
+else()
+  execute_process(
+    COMMAND mads -p
+    OUTPUT_VARIABLE MADS_PREFIX
+    RESULT_VARIABLE MADS_PREFIX_RESULT
+    ERROR_VARIABLE MADS_PREFIX_ERROR
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+  )
+  if(NOT MADS_PREFIX_RESULT STREQUAL "0" OR MADS_PREFIX STREQUAL "")
+    message(FATAL_ERROR
+      "Could not determine MADS prefix. Set MADS_ROOT or ensure `mads -p` works. "
+      "${MADS_PREFIX_ERROR}")
+  endif()
+endif()
+file(TO_CMAKE_PATH "${MADS_PREFIX}" MADS_PREFIX)
+if(NOT EXISTS "${MADS_PREFIX}/include/agent.hpp")
+  message(FATAL_ERROR "Could not find MADS headers in ${MADS_PREFIX}/include")
+endif()
 message(STATUS "MADS_PREFIX: ${MADS_PREFIX}")
-include_directories(${MADS_PREFIX}/include)
-link_directories(${MADS_PREFIX}/lib)
+include_directories("${MADS_PREFIX}/include")
+link_directories("${MADS_PREFIX}/lib")
 if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
-  set_property(CACHE CMAKE_INSTALL_PREFIX PROPERTY VALUE ${MADS_PREFIX})
+  set_property(CACHE CMAKE_INSTALL_PREFIX PROPERTY VALUE "${MADS_PREFIX}")
 endif()
 message(STATUS "CMAKE_BUILD_TYPE: ${CMAKE_BUILD_TYPE}")
 message(STATUS "CMAKE_INSTALL_PREFIX: ${CMAKE_INSTALL_PREFIX}") 
@@ -86,7 +102,7 @@ if(WIN32 AND EXISTS "${CMAKE_CURRENT_LIST_DIR}/.venv/Scripts/python.exe")
 endif()
 find_package(Python3 REQUIRED COMPONENTS Interpreter Development)
 include_directories(
-  ${plugin_SOURCE_DIR}/src
+  ${SRC_DIR}
   ${cppy3_SOURCE_DIR}
   ${Python3_INCLUDE_DIRS}
   ${toml_SOURCE_DIR}/include
@@ -119,7 +135,7 @@ add_executable(python_agent ${SRC_DIR}/main/python.cpp)
 if(WIN32)
   # Prevent legacy winsock.h declarations from conflicting with winsock2.h.
   target_compile_definitions(python_agent PRIVATE _WINSOCKAPI_)
-  link_directories(${MADS_PREFIX}/lib ${MADS_PREFIX}/bin)
+  link_directories("${MADS_PREFIX}/lib" "${MADS_PREFIX}/bin")
   target_link_libraries(python_agent PRIVATE cppy3 Python3::Python Ws2_32 bcrypt Secur32 Crypt32 Dnsapi IPHLPAPI MadsCore)
 else()
   target_link_libraries(python_agent PRIVATE cppy3 MadsCore)
