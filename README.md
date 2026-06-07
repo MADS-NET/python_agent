@@ -1,6 +1,15 @@
-[![Build and Release](https://github.com/MADS-NET/python_agent/actions/workflows/release.yml/badge.svg)](https://github.com/MADS-NET/python_agent/actions/workflows/release.yml)
+[![Build and Release](https://github.com/MADS-NET/python_agent/actions/workflows/release.yml/badge.svg)](https://github.com/MADS-NET/python_agent/actions/workflows/release.yml) ![Dynamic JSON Badge](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2FMADS-NET%2F.github%2Fmain%2Fprofile%2Fpackages.json&query=%24.packages.%5B'mads-python'%5D.type&label=mads%20package)
 
 # MADS Monolithic Python Interpreter
+
+
+## Package install
+
+with MADS v2.1.1 or later, install with:
+
+```bash
+mads package --install mads-python
+```
 
 ## Compilation
 
