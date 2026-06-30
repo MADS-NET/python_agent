@@ -23,7 +23,7 @@
       ],
       "commands": [
         "xattr -d com.apple.quarantine $(mads -p)/bin/mads-python",
-        "xattr -d com.apple.quarantine -r $(mads -p)/python-runtime",
+        "xattr -d com.apple.quarantine -r $(mads -p)/python-runtime"
       ]
     }
   }
