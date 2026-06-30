@@ -1,6 +1,17 @@
-[![Build and Release](https://github.com/MADS-NET/python_agent/actions/workflows/release.yml/badge.svg)](https://github.com/MADS-NET/python_agent/actions/workflows/release.yml)
+[![Build and Release](https://github.com/MADS-NET/python_agent/actions/workflows/release.yml/badge.svg)](https://github.com/MADS-NET/python_agent/actions/workflows/release.yml) ![Dynamic JSON Badge](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2FMADS-NET%2F.github%2Fmain%2Fprofile%2Fpackages.json&query=%24.packages.%5B'mads-python'%5D.type&label=mads%20package&logo=C%2B%2B)
+
 
 # MADS Monolithic Python Interpreter
+
+## Package install
+
+with MADS v2.3.0 or later, install with:
+
+```bash
+mads package --install mads-python
+```
+
+> **NOTE** that this is installing a bundled and portable Python interpreter, which is **not** the same as the system Python or a venv Python. If you rather prefer to use your own Python installation, you have to compile the plugin from source. See below for details.
 
 
 ## Compilation
@@ -109,6 +120,16 @@ pinned python-build-standalone release (see `PBS_RELEASE` / `PBS_PYTHON_VERSION`
 > **Note:** this only makes the embedded Python portable. The `mads-python` binary still
 > depends on a compatible system C/C++ runtime (glibc/libstdc++ on Linux) and on the
 > MADS core libraries, exactly as before.
+
+To create a local `venv` for installing additional packages into the bundled interpreter, you can do:
+
+```sh
+# Create a venv inside the bundle
+$(mads -p)/python-runtime/bin/python3 -m venv ./bundle/venv
+source ./bundle/venv/bin/activate
+pip install <your-package>
+```
+
 
 ## Executing
 
