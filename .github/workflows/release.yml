@@ -282,20 +282,32 @@ jobs:
           esac
 
           url="https://github.com/astral-sh/python-build-standalone/releases/download/${PBS_RELEASE}/cpython-${PBS_PYTHON_VERSION}+${PBS_RELEASE}-${{ matrix.pbs_triple }}-install_only_stripped.tar.gz"
-          mkdir -p "$RUNNER_TEMP/pbs"
-          # Pipe straight into tar (no -f): passing the archive as a Windows path
-          # makes GNU tar in Git Bash treat the "D:" drive letter as a remote
-          # host:path spec ("Cannot connect to D:"). Reading from stdin avoids it,
-          # and works identically with bsdtar on macOS.
-          curl -fsSL "$url" | tar -xz -C "$RUNNER_TEMP/pbs"
+
+          # $RUNNER_TEMP is a native path (e.g. "D:\a\_temp" on Windows). MSYS
+          # tar/curl in Git Bash need a POSIX path ("/d/a/_temp"), so normalise
+          # with cygpath where available (Windows); on Linux/macOS it's a no-op.
+          dest="$RUNNER_TEMP/pbs"
+          if command -v cygpath >/dev/null 2>&1; then
+            dest="$(cygpath -u "$RUNNER_TEMP")/pbs"
+          fi
+
+          mkdir -p "$dest"
+          # Pipe straight into tar (no -f): a "D:" archive path would otherwise
+          # be parsed as a remote host:path spec. Works the same with bsdtar.
+          curl -fsSL "$url" | tar -xz -C "$dest"
 
           # Populate the bundled interpreter's own site-packages.
-          "$RUNNER_TEMP/pbs/python/$py" -m pip install --upgrade pip
-          "$RUNNER_TEMP/pbs/python/$py" -m pip install numpy
+          "$dest/python/$py" -m pip install --upgrade pip
+          "$dest/python/$py" -m pip install numpy
 
-          # Export as a forward-slash path; CMake's file(TO_CMAKE_PATH) handles it
-          # on Windows too.
-          echo "PBS_DIR=$RUNNER_TEMP/pbs/python" >> "$GITHUB_ENV"
+          # Export PBS_DIR in a form CMake/pwsh understand: a mixed Windows path
+          # with forward slashes ("D:/a/_temp/pbs/python") on Windows, the plain
+          # POSIX path elsewhere.
+          bundle="$dest/python"
+          if command -v cygpath >/dev/null 2>&1; then
+            bundle="$(cygpath -m "$dest/python")"
+          fi
+          echo "PBS_DIR=$bundle" >> "$GITHUB_ENV"
 
       - name: Configure
         if: runner.os != 'Windows'
