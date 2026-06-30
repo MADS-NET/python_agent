@@ -12,6 +12,7 @@ Author(s): Paolo Bosetti
 #include <agent.hpp>
 #include <cppy3/cppy3.hpp>
 #include <cppy3/utils.hpp>
+#include <cstdlib>
 #include <cxxopts.hpp>
 #include <mads.hpp>
 #include <agent_app.hpp>
@@ -22,6 +23,22 @@ using namespace Mads;
 using json = nlohmann::json;
 
 int main(int argc, char *argv[]) {
+#ifdef PYTHON_AGENT_BUNDLED
+  // When built with the bundled python-build-standalone distribution, point
+  // PYTHONHOME at it (relative to this executable) BEFORE the interpreter is
+  // initialized. cppy3::PythonVM's constructor calls Py_InitializeEx(), which
+  // honors PYTHONHOME, and that member is default-constructed when the
+  // PythonInterpreter object below is created -- so this must run first.
+  {
+    string bundled_home = exec_dir("../python-runtime");
+#ifdef _WIN32
+    _putenv_s("PYTHONHOME", bundled_home.c_str());
+#else
+    setenv("PYTHONHOME", bundled_home.c_str(), 1);
+#endif
+  }
+#endif
+
   string settings_uri = SETTINGS_URI;
   chrono::milliseconds time{100};
 

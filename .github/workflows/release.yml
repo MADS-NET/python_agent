@@ -16,6 +16,13 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+env:
+  # Pinned python-build-standalone release bundled into every published package,
+  # so releases are self-contained and ABI-stable regardless of the runner's
+  # ambient Python. See https://github.com/astral-sh/python-build-standalone
+  PBS_RELEASE: "20260623"
+  PBS_PYTHON_VERSION: "3.12.13"
+
 jobs:
   build:
     name: ${{ matrix.name }}
@@ -29,42 +36,44 @@ jobs:
             os: ubuntu-22.04
             package: linux-x86_64
             mads_asset: "*Linux-x86_64.tar.gz"
+            pbs_triple: x86_64-unknown-linux-gnu
 
           - name: Linux aarch64
             os: ubuntu-22.04-arm
             package: linux-aarch64
             mads_asset: "*Linux-aarch64.tar.gz"
+            pbs_triple: aarch64-unknown-linux-gnu
 
           - name: macOS arm64
             os: macos-15
             package: macos-arm64
             mads_asset: "*Darwin-universal.sh"
             cmake_osx_architectures: "arm64"
+            pbs_triple: aarch64-apple-darwin
 
           - name: macOS x86_64
             os: macos-14
             package: macos-x86_64
             mads_asset: "*Darwin-universal.sh"
             cmake_osx_architectures: "x86_64"
+            pbs_triple: x86_64-apple-darwin
 
           - name: Windows x86_64
             os: windows-2022
             package: windows-x86_64
             mads_asset: "*Windows-AMD64.exe"
+            pbs_triple: x86_64-pc-windows-msvc
 
     steps:
       - name: Check out sources
         uses: actions/checkout@v6
 
+      # Used only for the stdlib JSON heredocs in the "Install MADS" steps below.
+      # The interpreter shipped to users is the bundled one downloaded later.
       - name: Set up Python
         uses: actions/setup-python@v6
         with:
           python-version: '3.x'
-
-      - name: Install Python dependencies
-        run: |
-          python -m pip install --upgrade pip
-          python -m pip install numpy
 
       - name: Install Linux build dependencies
         if: runner.os == 'Linux'
@@ -257,6 +266,29 @@ jobs:
           "MADS_ROOT=$madsRoot" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
           "$madsRoot\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
 
+      - name: Download bundled CPython
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          case "${{ matrix.pbs_triple }}" in
+            *windows*) py=python.exe ;;
+            *)         py=bin/python3 ;;
+          esac
+
+          url="https://github.com/astral-sh/python-build-standalone/releases/download/${PBS_RELEASE}/cpython-${PBS_PYTHON_VERSION}+${PBS_RELEASE}-${{ matrix.pbs_triple }}-install_only_stripped.tar.gz"
+          mkdir -p "$RUNNER_TEMP/pbs"
+          curl -fsSL "$url" -o "$RUNNER_TEMP/pbs/cpython.tar.gz"
+          tar -xzf "$RUNNER_TEMP/pbs/cpython.tar.gz" -C "$RUNNER_TEMP/pbs"
+
+          # Populate the bundled interpreter's own site-packages.
+          "$RUNNER_TEMP/pbs/python/$py" -m pip install --upgrade pip
+          "$RUNNER_TEMP/pbs/python/$py" -m pip install numpy
+
+          # Export as a forward-slash path; CMake's file(TO_CMAKE_PATH) handles it
+          # on Windows too.
+          echo "PBS_DIR=$RUNNER_TEMP/pbs/python" >> "$GITHUB_ENV"
+
       - name: Configure
         if: runner.os != 'Windows'
         env:
@@ -273,6 +305,8 @@ jobs:
             -DCMAKE_BUILD_TYPE=Release \
             -DCMAKE_INSTALL_PREFIX="$PWD/package" \
             -DMADS_ROOT="$MADS_ROOT" \
+            -DPYTHON_AGENT_BUNDLE_PYTHON=ON \
+            -DPYTHON_BUNDLE_DIR="$PBS_DIR" \
             "${extra_args[@]}"
 
       - name: Configure
@@ -282,7 +316,9 @@ jobs:
           cmake -S . -B build -G Ninja `
             -DCMAKE_BUILD_TYPE=Release `
             "-DCMAKE_INSTALL_PREFIX=$env:GITHUB_WORKSPACE\package" `
-            "-DMADS_ROOT=$env:MADS_ROOT"
+            "-DMADS_ROOT=$env:MADS_ROOT" `
+            -DPYTHON_AGENT_BUNDLE_PYTHON=ON `
+            "-DPYTHON_BUNDLE_DIR=$env:PBS_DIR"
 
       - name: Build
         run: cmake --build build --config Release --parallel

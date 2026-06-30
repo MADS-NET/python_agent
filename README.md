@@ -56,6 +56,60 @@ Then you can just type `mads-python -h`.
 
 **Note**: for `sudo` to work on Windows, you need to enable it on *Settings > System > For Developers* and set *Enable sudo* to On.
 
+### Bundled Python (portable builds)
+
+By default the plugin links **dynamically** against whatever Python it finds on the
+build machine (`find_package(Python3 ...)`). This is fine for builds made and used on
+the same machine, but it makes the resulting `mads-python` binary **non-portable**: a
+target machine needs a byte-compatible `libpython3.x`, the matching standard library,
+and any packages used by your scripts (e.g. numpy) installed at the same locations.
+
+For portable, self-contained packages there is an **opt-in** build mode that bundles a
+relocatable [python-build-standalone](https://github.com/astral-sh/python-build-standalone)
+CPython distribution inside the package, next to the executable. The binary then loads
+its `libpython` and standard library from that bundled copy (via rpath and a
+`PYTHONHOME` set relative to the executable at startup), so the package runs on a clean
+machine with no system Python at all.
+
+This mode is controlled by two CMake options:
+
+| Option | Default | Meaning |
+|--------|---------|---------|
+| `PYTHON_AGENT_BUNDLE_PYTHON` | `OFF` | Enable bundling. When `OFF`, behaviour is exactly as described above (system/venv Python). |
+| `PYTHON_BUNDLE_DIR` | *(empty)* | Path to an extracted, pip-populated python-build-standalone `install_only` distribution (the directory containing `bin/python3` on Unix or `python.exe` on Windows). **Required** when `PYTHON_AGENT_BUNDLE_PYTHON=ON`. |
+
+To build in bundled mode, first download and prepare a distribution, then point the
+build at it. For example on macOS (arm64):
+
+```sh
+# 1. Download + extract a matching python-build-standalone distribution
+curl -fsSL "https://github.com/astral-sh/python-build-standalone/releases/download/20260623/cpython-3.12.13+20260623-aarch64-apple-darwin-install_only_stripped.tar.gz" -o cpython.tar.gz
+mkdir -p bundle && tar xzf cpython.tar.gz -C bundle   # -> bundle/python/...
+
+# 2. Install your script dependencies into the bundle, using ITS OWN pip
+./bundle/python/bin/python3 -m pip install numpy
+
+# 3. Configure + build with bundling enabled
+cmake -Bbuild -G Ninja \
+  -DPYTHON_AGENT_BUNDLE_PYTHON=ON \
+  -DPYTHON_BUNDLE_DIR="$PWD/bundle/python"
+cmake --build build -j6
+cmake --install build
+```
+
+The installed package gains a `python-runtime/` directory (alongside `bin/` and
+`lib/`) holding the bundled interpreter. Any Python packages your scripts need must be
+`pip install`ed **into the bundle** (step 2) so they ship with it — the bundled
+interpreter does not see the system/venv site-packages.
+
+The GitHub Actions release workflow builds **all** published packages this way, using a
+pinned python-build-standalone release (see `PBS_RELEASE` / `PBS_PYTHON_VERSION` in
+`.github/workflows/release.yml`), so downloadable releases are self-contained.
+
+> **Note:** this only makes the embedded Python portable. The `mads-python` binary still
+> depends on a compatible system C/C++ runtime (glibc/libstdc++ on Linux) and on the
+> MADS core libraries, exactly as before.
+
 ## Executing
 
 Typically, to launch an agent named `python_source`, that gets its settings from a `python_source` section in `mads.ini`, and uses the Python module named `source` defined in the `source.py` file and that runs every 100 ms, the command is:
