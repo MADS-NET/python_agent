@@ -8,6 +8,11 @@ on:
       - 'v*.*.*'
   pull_request:
   workflow_dispatch:
+    inputs:
+      make_release:
+        description: "Also publish a GitHub release from this manual run"
+        type: boolean
+        default: true
 
 permissions:
   contents: read
@@ -278,8 +283,11 @@ jobs:
 
           url="https://github.com/astral-sh/python-build-standalone/releases/download/${PBS_RELEASE}/cpython-${PBS_PYTHON_VERSION}+${PBS_RELEASE}-${{ matrix.pbs_triple }}-install_only_stripped.tar.gz"
           mkdir -p "$RUNNER_TEMP/pbs"
-          curl -fsSL "$url" -o "$RUNNER_TEMP/pbs/cpython.tar.gz"
-          tar -xzf "$RUNNER_TEMP/pbs/cpython.tar.gz" -C "$RUNNER_TEMP/pbs"
+          # Pipe straight into tar (no -f): passing the archive as a Windows path
+          # makes GNU tar in Git Bash treat the "D:" drive letter as a remote
+          # host:path spec ("Cannot connect to D:"). Reading from stdin avoids it,
+          # and works identically with bsdtar on macOS.
+          curl -fsSL "$url" | tar -xz -C "$RUNNER_TEMP/pbs"
 
           # Populate the bundled interpreter's own site-packages.
           "$RUNNER_TEMP/pbs/python/$py" -m pip install --upgrade pip
@@ -335,7 +343,9 @@ jobs:
 
   release:
     name: Create GitHub release
-    if: startsWith(github.ref, 'refs/tags/')
+    if: >-
+      startsWith(github.ref, 'refs/tags/') ||
+      (github.event_name == 'workflow_dispatch' && inputs.make_release)
     needs: build
     runs-on: ubuntu-24.04
     permissions:
