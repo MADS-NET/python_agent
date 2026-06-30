@@ -5,7 +5,7 @@
       "note": [
         "Requires MADS 2.3.0 or later",
         "Provides embedded CPython 3.14.5 interpreter, installed under $(mads -p)/python-runtime/bin/python3",
-        "Install Python depencencies with pip, preferably in a virtual environment generated with the bundled interpreter",
+        "Install Python depencencies with pip, preferably in a virtual environment generated with the bundled interpreter"
       ] 
     },
     "Windows": {
