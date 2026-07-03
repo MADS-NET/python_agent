@@ -13,6 +13,7 @@ set(CMAKE_BUILD_TYPE Release CACHE STRING "Choose the type of build." FORCE)
 # PROJECT SETTINGS #############################################################
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_SCAN_FOR_MODULES OFF)
 set(SRC_DIR ${CMAKE_CURRENT_LIST_DIR}/src)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
@@ -211,6 +212,7 @@ else()
 endif()
 set_target_properties(python_agent PROPERTIES
   OUTPUT_NAME mads-python
+  CXX_SCAN_FOR_MODULES OFF
 )
 list(APPEND TARGET_LIST python_agent)
 
