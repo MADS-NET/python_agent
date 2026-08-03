@@ -29,42 +29,42 @@ public:
   PythonInterpreter(json const &params, string module)
       : _params(params), _python_module(module) {
     setup_venv();
-    cppy3::exec("import sys");
+    _ns.exec("import sys");
     for (auto &path : _default_paths) {
-      cppy3::exec("sys.path.append('" + path + "')");
+      _ns.exec("sys.path.append('" + path + "')");
     }
     for (auto &path : _params["search_paths"]) {
       if (path.is_string()) {
-        cppy3::exec("sys.path.append('" + path.get<string>() + "')");
+        _ns.exec("sys.path.append('" + path.get<string>() + "')");
       } else if (path.is_array()) {
         for (auto &p : path) {
-          cppy3::exec("sys.path.append('" + p.get<string>() + "')");
+          _ns.exec("sys.path.append('" + p.get<string>() + "')");
         }
       }
     }
     try {
-      cppy3::exec("import " + _python_module + " as mads");
-    } catch (cppy3::PythonException &e) {
+      _ns.exec("import " + _python_module + " as mads");
+    } catch (cppy3::Error &e) {
       cerr << "Error loading module: " << e.what();
       exit(EXIT_FAILURE);
     }
-    cppy3::exec(R"(
+    _ns.exec(R"(
 import json
 mads.data = {}
 mads.state = {}
 mads.topic = ''
     )");
-    cppy3::exec("mads.params = json.loads('" + params.dump() + "')");
+    _ns.exec("mads.params = json.loads('" + params.dump() + "')");
     try {
-      cppy3::exec("mads.setup()");
-    } catch (cppy3::PythonException &e) {
+      _ns.exec("mads.setup()");
+    } catch (cppy3::Error &e) {
       cerr << "[Python] running setup(): " << e.what();
     }
     // Get Agent type
     try {
-      const cppy3::Var at = cppy3::eval("mads.agent_type");
-      _agent_type = cppy3::WideToUTF8(at.toString());
-    } catch (cppy3::PythonException &e) {
+      const cppy3::Var at = _ns.eval("mads.agent_type");
+      _agent_type = at.str();
+    } catch (cppy3::Error &e) {
       cerr << fg::yellow
                 << "[Python] Agent type unspecified, using default" << fg::reset
                 << endl;
@@ -115,17 +115,19 @@ mads.topic = ''
             "Could not find site-packages in virtual environment: " +
             venv.string());
       }
-      cppy3::exec("import site");
-      cppy3::exec("site.addsitedir('" + site_packages.string() + "')");
+      _ns.exec("import site");
+      _ns.exec("site.addsitedir('" + site_packages.string() + "')");
     }
   }
 
   string agent_type() const { return _agent_type; }
   string python_module() const { return _python_module; }
+  cppy3::Namespace ns() const { return _ns; }
 
 protected:
   json _params;
-  cppy3::PythonVM _python;
+  cppy3::Interpreter _python;
+  cppy3::Namespace _ns = _python.main();
   string _python_module;
   string _agent_type = "source";
   // clang-format off

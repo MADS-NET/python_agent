@@ -93,7 +93,7 @@ FetchContent_Declare(json
 
 FetchContent_Declare(cppy3 
   GIT_REPOSITORY https://github.com/pbosetti/cppy3.git
-  GIT_TAG        1.2.1
+  GIT_TAG        main
   GIT_SHALLOW    TRUE
   EXCLUDE_FROM_ALL
 )
@@ -164,7 +164,6 @@ if(PYTHON_AGENT_BUNDLE_PYTHON)
 endif()
 include_directories(
   ${SRC_DIR}
-  ${cppy3_SOURCE_DIR}
   ${Python3_INCLUDE_DIRS}
   ${toml_SOURCE_DIR}/include
   ${rang_SOURCE_DIR}/include
@@ -206,9 +205,9 @@ if(WIN32)
   # Prevent legacy winsock.h declarations from conflicting with winsock2.h.
   target_compile_definitions(python_agent PRIVATE _WINSOCKAPI_)
   link_directories("${MADS_PREFIX}/lib" "${MADS_PREFIX}/bin")
-  target_link_libraries(python_agent PRIVATE cppy3 Python3::Python Ws2_32 bcrypt Secur32 Crypt32 Dnsapi IPHLPAPI MadsCore)
+  target_link_libraries(python_agent PRIVATE cppy3::cppy3 Python3::Python Ws2_32 bcrypt Secur32 Crypt32 Dnsapi IPHLPAPI MadsCore)
 else()
-  target_link_libraries(python_agent PRIVATE cppy3 MadsCore)
+  target_link_libraries(python_agent PRIVATE cppy3::cppy3 MadsCore)
 endif()
 set_target_properties(python_agent PROPERTIES
   OUTPUT_NAME mads-python

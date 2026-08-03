@@ -117,10 +117,9 @@ int main(int argc, char *argv[]) {
     json out;
     agent.loop([&]() -> chrono::milliseconds {
       try {
-        result =
-            cppy3::WideToUTF8(cppy3::eval("mads.get_output()").toString());
+        result = py.ns().eval("mads.get_output()").str();
         out = json::parse(result);
-      } catch (cppy3::PythonException &e) {
+      } catch (cppy3::Error &e) {
         cerr << fg::red << "Error running get_output(): " << e.what()
               << fg::reset << endl;
         return 0ms;
@@ -155,17 +154,17 @@ int main(int argc, char *argv[]) {
       // agent.remote_control();
       if (type == message_type::json && agent.last_topic() != "control") {
         try {
-          cppy3::exec("mads.topic = '" + agent.last_topic() + "'");
-          cppy3::exec("mads.data = json.loads('" + get<1>(msg) + "')");
-        } catch (cppy3::PythonException &e) {
+          py.ns().exec("mads.topic = '" + agent.last_topic() + "'");
+          py.ns().exec("mads.data = json.loads('" + get<1>(msg) + "')");
+        } catch (cppy3::Error &e) {
           cerr << fg::red << "Error loading data: " << e.what() << fg::reset
                << endl;
           return 0ms;
         }
         try {
-          result = cppy3::WideToUTF8(cppy3::eval("mads.process()").toString());
+          result = py.ns().eval("mads.process()").str();
           out = json::parse(result);
-        } catch (cppy3::PythonException &e) {
+        } catch (cppy3::Error &e) {
           cerr << fg::red << "Error running process(): " << e.what()
                << fg::reset << endl;
           return 0ms;
@@ -199,16 +198,16 @@ int main(int argc, char *argv[]) {
       // agent.remote_control();
       if (type == message_type::json && agent.last_topic() != "control") {
         try {
-          cppy3::exec("mads.topic = '" + agent.last_topic() + "'");
-          cppy3::exec("mads.data = json.loads('" + get<1>(msg) + "')");
-        } catch (cppy3::PythonException &e) {
+          py.ns().exec("mads.topic = '" + agent.last_topic() + "'");
+          py.ns().exec("mads.data = json.loads('" + get<1>(msg) + "')");
+        } catch (cppy3::Error &e) {
           cerr << fg::red << "Error loading data: " << e.what() << fg::reset
                << endl;
           return 0ms;
         }
         try {
-          cppy3::exec("mads.deal_with_data()");
-        } catch (cppy3::PythonException &e) {
+          py.ns().exec("mads.deal_with_data()");
+        } catch (cppy3::Error &e) {
           cerr << fg::red << "Error running deal_with_data(): " << e.what()
                << fg::reset << endl;
           return 0ms;
