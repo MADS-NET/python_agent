@@ -23,22 +23,6 @@ using namespace Mads;
 using json = nlohmann::json;
 
 int main(int argc, char *argv[]) {
-#ifdef PYTHON_AGENT_BUNDLED
-  // When built with the bundled python-build-standalone distribution, point
-  // PYTHONHOME at it (relative to this executable) BEFORE the interpreter is
-  // initialized. cppy3::PythonVM's constructor calls Py_InitializeEx(), which
-  // honors PYTHONHOME, and that member is default-constructed when the
-  // PythonInterpreter object below is created -- so this must run first.
-  {
-    string bundled_home = exec_dir("../python-runtime");
-#ifdef _WIN32
-    _putenv_s("PYTHONHOME", bundled_home.c_str());
-#else
-    setenv("PYTHONHOME", bundled_home.c_str(), 1);
-#endif
-  }
-#endif
-
   string settings_uri = SETTINGS_URI;
   chrono::milliseconds time{100};
 
@@ -105,7 +89,9 @@ int main(int argc, char *argv[]) {
   cerr << "  Loaded module:    " << style::bold
        << settings["python_module"].get<string>() << style::reset << endl;
 
-  // Instantiate interpreter
+  // Instantiate interpreter. A bundled python-build-standalone distribution
+  // is located through cppy3::Config::home in make_config(), so there is no
+  // PYTHONHOME to plant in the environment before this point.
   PythonInterpreter py(settings, settings["python_module"].get<string>());
 
   // Main loop =================================================================
@@ -117,10 +103,10 @@ int main(int argc, char *argv[]) {
     json out;
     agent.loop([&]() -> chrono::milliseconds {
       try {
-        result = py.ns().eval("mads.get_output()").str();
+        result = py.call("get_output").str();
         out = json::parse(result);
-      } catch (cppy3::Error &e) {
-        cerr << fg::red << "Error running get_output(): " << e.what()
+      } catch (cppy3::Error const &e) {
+        cerr << fg::red << "Error running get_output(): " << e.format()
               << fg::reset << endl;
         return 0ms;
       } catch (json::parse_error &e) {
@@ -154,18 +140,17 @@ int main(int argc, char *argv[]) {
       // agent.remote_control();
       if (type == message_type::json && agent.last_topic() != "control") {
         try {
-          py.ns().exec("mads.topic = '" + agent.last_topic() + "'");
-          py.ns().exec("mads.data = json.loads('" + get<1>(msg) + "')");
-        } catch (cppy3::Error &e) {
-          cerr << fg::red << "Error loading data: " << e.what() << fg::reset
+          py.set_input(agent.last_topic(), get<1>(msg));
+        } catch (cppy3::Error const &e) {
+          cerr << fg::red << "Error loading data: " << e.format() << fg::reset
                << endl;
           return 0ms;
         }
         try {
-          result = py.ns().eval("mads.process()").str();
+          result = py.call("process").str();
           out = json::parse(result);
-        } catch (cppy3::Error &e) {
-          cerr << fg::red << "Error running process(): " << e.what()
+        } catch (cppy3::Error const &e) {
+          cerr << fg::red << "Error running process(): " << e.format()
                << fg::reset << endl;
           return 0ms;
         } catch (json::parse_error &e) {
@@ -198,17 +183,16 @@ int main(int argc, char *argv[]) {
       // agent.remote_control();
       if (type == message_type::json && agent.last_topic() != "control") {
         try {
-          py.ns().exec("mads.topic = '" + agent.last_topic() + "'");
-          py.ns().exec("mads.data = json.loads('" + get<1>(msg) + "')");
-        } catch (cppy3::Error &e) {
-          cerr << fg::red << "Error loading data: " << e.what() << fg::reset
+          py.set_input(agent.last_topic(), get<1>(msg));
+        } catch (cppy3::Error const &e) {
+          cerr << fg::red << "Error loading data: " << e.format() << fg::reset
                << endl;
           return 0ms;
         }
         try {
-          py.ns().exec("mads.deal_with_data()");
-        } catch (cppy3::Error &e) {
-          cerr << fg::red << "Error running deal_with_data(): " << e.what()
+          py.call("deal_with_data");
+        } catch (cppy3::Error const &e) {
+          cerr << fg::red << "Error running deal_with_data(): " << e.format()
                << fg::reset << endl;
           return 0ms;
         }
