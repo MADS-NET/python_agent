@@ -2,7 +2,7 @@ import sys
 import json
 
 # Specify that this is a filter agent
-agent_type = "filter"
+mads.agent_type = "filter"
 
 # This is an optional function that is called once, when the script is loaded.
 # Use it for exampleto open a serial port connection.
@@ -12,10 +12,10 @@ agent_type = "filter"
 # obtained from the configuration file.
 def setup():
   print("[Python] Setting up filter...")
-  print("[Python] Parameters: " + json.dumps(params))
-  print("[Python] Topic: " + topic)
-  state["port"] = params["port"]
-  print("[Python] Port: " + state["port"])
+  print("[Python] Parameters: " + json.dumps(mads.params))
+  print("[Python] Topic: " + mads.topic)
+  mads.state["port"] = mads.params["port"]
+  print("[Python] Port: " + mads.state["port"])
 
 # This is a mandatory function that must be implemented in the script.
 # The function must return a JSON string.
@@ -25,7 +25,7 @@ def process():
   # print("[Python] Processing data from topic '" + topic + "'...")
   # print("[Python] port: ", state["port"])
   # print("[Python] data:", data)
-  data["processed"] = True
-  data["n"] = data["n"] * 2
+  mads.data["processed"] = True
+  mads.data["n"] = mads.data["n"] * 2
   # print("[Python] data:", data)
-  return json.dumps(data)
+  return json.dumps(mads.data)

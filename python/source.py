@@ -6,7 +6,7 @@ from datetime import datetime
 # import mfrc522
 
 # Specify that this is a source agent
-agent_type = "source"
+mads.agent_type = "source"
 
 # This is an optional function that is called once, when the script is loaded.
 # Use it for exampleto open a serial port connection.
@@ -16,8 +16,8 @@ agent_type = "source"
 # obtained from the configuration file.
 def setup():
   print("[Python] Setting up source...")
-  print("[Python] Parameters: " + json.dumps(params))
-  state["n"] = 0
+  print("[Python] Parameters: " + json.dumps(mads.params))
+  mads.state["n"] = 0
 
 
 # This is a mandatory function that must be implemented in the script.
@@ -25,7 +25,7 @@ def setup():
 # It has access to the dictionaries `state` and `params`, and to the
 # string `topic`.
 def get_output():
-  data = {"list": [1, 2, 3, 4], "n": state["n"]}
-  state["n"] = state["n"] + 1
-  data["processed"] = False
-  return json.dumps(data)
+  mads.data = {"list": [1, 2, 3, 4], "n": mads.state["n"]}
+  mads.state["n"] = mads.state["n"] + 1
+  mads.data["processed"] = False
+  return json.dumps(mads.data)

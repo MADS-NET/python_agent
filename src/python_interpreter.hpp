@@ -51,7 +51,31 @@ public:
     // decide that: the cppy3::Error propagates rather than exiting from
     // inside a constructor, which left the object half-built and gave the
     // caller no chance to report it in context.
-    _mads = _python.import(_python_module);
+    //
+    // Imported through Python's own low-level import machinery
+    // (importlib.util.module_from_spec()/exec_module(), the documented
+    // equivalent of a plain import) rather than cppy3::Interpreter::import(),
+    // because the `mads` self-reference below -- what makes the mads.<name>
+    // prefix work -- has to already be set on the module's namespace BEFORE
+    // its top-level code runs: the README's own convention is
+    // "mads.agent_type = ..." as the first statement in the file, right
+    // after the imports, and cppy3::Interpreter::import() only hands back
+    // the module Var after that code has already finished executing (too
+    // late to set anything it might read).
+    cppy3::Namespace boot = _python.new_namespace();
+    boot.set("_python_agent_module_name", _python_module);
+    boot.exec(R"(
+import importlib.util as _python_agent_ilu
+import sys as _python_agent_sys
+_python_agent_spec = _python_agent_ilu.find_spec(_python_agent_module_name)
+if _python_agent_spec is None:
+    raise ModuleNotFoundError("No module named " + repr(_python_agent_module_name))
+_python_agent_module = _python_agent_ilu.module_from_spec(_python_agent_spec)
+_python_agent_module.mads = _python_agent_module
+_python_agent_sys.modules[_python_agent_module_name] = _python_agent_module
+_python_agent_spec.loader.exec_module(_python_agent_module)
+)");
+    _mads = boot.get<cppy3::Var>("_python_agent_module");
     // Keep the module reachable as `mads` from __main__ as well, as the
     // "import <module> as mads" this replaces did.
     _ns.set("mads", _mads);

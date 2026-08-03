@@ -172,6 +172,8 @@ Python modules can be of type `source`, `filter`, or `sink`. The module type is 
 
 ```python
 agent_type = "sink"
+# or, namespaced (see "The mads namespace" below):
+mads.agent_type = "sink"
 ```
 
 All the modules **must** implement a `setup()` function, which is expected to use the dictionary available in the module variable `params` (a dictionary) to do initial setup (opening ports or files, etc.)
@@ -183,3 +185,18 @@ All the modules **must** implement a `setup()` function, which is expected to us
 **Sink** modules **must** implement a `deal_with_data()` function, that operates on the `data` dictionary, a module variable.
 
 See examples in the `python` folder.
+
+### The `mads` namespace
+
+`agent_type`, `params`, `state`, `topic`, and `data` are also reachable
+prefixed with `mads.` (`mads.params`, `mads.state`, etc.), instead of as
+bare names. This is the exact same object as the bare name, not a copy, so
+`mads.state` and `state` always agree -- use the prefix when a script wants
+a variable of its own named `state`, `data`, `topic`, or `params` without
+shadowing MADS'. The bare names keep working unchanged either way.
+
+`mads.agent_type` is available from the very first line of the module (it
+has to be, to support the `agent_type = ...` top-level convention above).
+`mads.params`/`mads.state`/`mads.topic`/`mads.data` are only populated once
+the module has finished loading, same as the bare names -- read/write them
+from `setup()` or later, not at the top level of the file.

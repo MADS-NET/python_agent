@@ -86,6 +86,26 @@ TEST_CASE("filter agent: agent_type, params, and process() round-trip") {
   CHECK(out["topic_seen"] == "nasty'topic");
 }
 
+TEST_CASE("filter agent: mads.<name> aliases the bare state/data/topic/params/agent_type, not a copy") {
+  unset_env("VIRTUAL_ENV");
+  auto settings = base_settings();
+  settings["label"] = "via-mads-check";
+
+  Mads::PythonInterpreter py(settings, "agent_mads_alias");
+
+  json payload;
+  payload["n"] = 7;
+  py.set_input("some-topic", payload.dump());
+
+  json out = json::parse(py.call("process").str());
+  CHECK(out["agent_type_via_mads"] == "filter");
+  CHECK(out["topic_via_mads"] == "some-topic");
+  CHECK(out["params_via_mads"] == "via-mads-check");
+  // mads.state is state, not a copy: a write through the bare name in
+  // setup() must be visible through the mads. prefix in process().
+  CHECK(out["state_is_shared"] == true);
+}
+
 TEST_CASE("filter agent: calling a missing function throws cppy3::Error") {
   unset_env("VIRTUAL_ENV");
   Mads::PythonInterpreter py(base_settings(), "agent_filter");
