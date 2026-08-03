@@ -15,6 +15,7 @@ Author(s): Paolo Bosetti
 #include <cstdlib>
 #include <cxxopts.hpp>
 #include <mads.hpp>
+#include <optional>
 #include <agent_app.hpp>
 
 using namespace std;
@@ -92,18 +93,36 @@ int main(int argc, char *argv[]) {
   // Instantiate interpreter. A bundled python-build-standalone distribution
   // is located through cppy3::Config::home in make_config(), so there is no
   // PYTHONHOME to plant in the environment before this point.
-  PythonInterpreter py(settings, settings["python_module"].get<string>());
+  //
+  // optional<> so construction can be attempted inside a try block without
+  // moving the result: PythonInterpreter owns a cppy3::Interpreter, which is
+  // deliberately neither copyable nor movable (one CPython per process).
+  optional<PythonInterpreter> py;
+  try {
+    py.emplace(settings, settings["python_module"].get<string>());
+  } catch (const cppy3::Error &e) {
+    cerr << fg::red << "Error loading Python module '"
+         << settings["python_module"].get<string>() << "':" << endl
+         << e.format() << fg::reset << endl;
+    exit(EXIT_FAILURE);
+  } catch (const std::exception &e) {
+    // Chiefly setup_venv()'s "venv does not exist" / "no site-packages",
+    // which used to escape main() uncaught and abort.
+    cerr << fg::red << "Error initializing Python interpreter: " << e.what()
+         << fg::reset << endl;
+    exit(EXIT_FAILURE);
+  }
 
   // Main loop =================================================================
   cout << fg::green << "Python process started" << fg::reset << endl;
 
   // SOURCE
-  if (py.agent_type() == "source") {
+  if (py->agent_type() == "source") {
     string result;
     json out;
     agent.loop([&]() -> chrono::milliseconds {
       try {
-        result = py.call("get_output").str();
+        result = py->call("get_output").str();
         out = json::parse(result);
       } catch (cppy3::Error const &e) {
         cerr << fg::red << "Error running get_output(): " << e.format()
@@ -122,7 +141,7 @@ int main(int argc, char *argv[]) {
     }, time);
 
     // FILTER
-  } else if (py.agent_type() == "filter") {
+  } else if (py->agent_type() == "filter") {
     message_type type;
     auto msg = agent.last_message();
     json out;
@@ -140,14 +159,14 @@ int main(int argc, char *argv[]) {
       // agent.remote_control();
       if (type == message_type::json && agent.last_topic() != "control") {
         try {
-          py.set_input(agent.last_topic(), get<1>(msg));
+          py->set_input(agent.last_topic(), get<1>(msg));
         } catch (cppy3::Error const &e) {
           cerr << fg::red << "Error loading data: " << e.format() << fg::reset
                << endl;
           return 0ms;
         }
         try {
-          result = py.call("process").str();
+          result = py->call("process").str();
           out = json::parse(result);
         } catch (cppy3::Error const &e) {
           cerr << fg::red << "Error running process(): " << e.format()
@@ -167,7 +186,7 @@ int main(int argc, char *argv[]) {
     });
 
     // SINK
-  } else if (py.agent_type() == "sink") {
+  } else if (py->agent_type() == "sink") {
     message_type type;
     auto msg = agent.last_message();
     json in;
@@ -183,14 +202,14 @@ int main(int argc, char *argv[]) {
       // agent.remote_control();
       if (type == message_type::json && agent.last_topic() != "control") {
         try {
-          py.set_input(agent.last_topic(), get<1>(msg));
+          py->set_input(agent.last_topic(), get<1>(msg));
         } catch (cppy3::Error const &e) {
           cerr << fg::red << "Error loading data: " << e.format() << fg::reset
                << endl;
           return 0ms;
         }
         try {
-          py.call("deal_with_data");
+          py->call("deal_with_data");
         } catch (cppy3::Error const &e) {
           cerr << fg::red << "Error running deal_with_data(): " << e.format()
                << fg::reset << endl;

@@ -47,12 +47,11 @@ public:
     }
     _python.append_sys_path(sys_paths);
 
-    try {
-      _mads = _python.import(_python_module);
-    } catch (cppy3::Error const &e) {
-      cerr << "Error loading module: " << e.format();
-      exit(EXIT_FAILURE);
-    }
+    // A module that will not import is fatal, but it is the caller's job to
+    // decide that: the cppy3::Error propagates rather than exiting from
+    // inside a constructor, which left the object half-built and gave the
+    // caller no chance to report it in context.
+    _mads = _python.import(_python_module);
     // Keep the module reachable as `mads` from __main__ as well, as the
     // "import <module> as mads" this replaces did.
     _ns.set("mads", _mads);
@@ -63,10 +62,13 @@ public:
     _mads.set_attr("data", cppy3::Dict::create());
     _mads.set_attr("state", cppy3::Dict::create());
     _mads.set_attr("topic", cppy3::to_var(""));
-    // params reaches json.loads() as a Python string argument, so a quote or
-    // a backslash anywhere in the settings stays data instead of terminating
+    // _params, not the ctor argument: setup_venv() may have just filled in
+    // "venv" from $VIRTUAL_ENV, and the Python side should see the
+    // environment actually in use rather than the null it was passed.
+    // It reaches json.loads() as a Python string argument, so a quote or a
+    // backslash anywhere in the settings stays data instead of terminating
     // the literal it used to be pasted into.
-    _mads.set_attr("params", _json_loads(params.dump()));
+    _mads.set_attr("params", _json_loads(_params.dump()));
 
     try {
       call("setup");

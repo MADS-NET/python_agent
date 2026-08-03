@@ -1,7 +1,7 @@
 import sys
 import json
 
-# Speify that this is a filter agent
+# Specify that this is a filter agent
 agent_type = "filter"
 
 # This is an optional function that is called once, when the script is loaded.

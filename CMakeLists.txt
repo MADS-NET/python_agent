@@ -216,6 +216,17 @@ set_target_properties(python_agent PROPERTIES
 list(APPEND TARGET_LIST python_agent)
 
 
+# TESTS #########################################################################
+# Opt-in: enable with -DPYTHON_AGENT_BUILD_TESTS=ON, then run `ctest` from the
+# build directory. See tests/test_python_interpreter.cpp for why each
+# TEST_CASE has to run as its own process.
+option(PYTHON_AGENT_BUILD_TESTS "Build the unit test suite (fetches Catch2)" OFF)
+if(PYTHON_AGENT_BUILD_TESTS)
+  enable_testing()
+  add_subdirectory(tests)
+endif()
+
+
 # INSTALL ######################################################################
 if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
   set_property(CACHE CMAKE_INSTALL_PREFIX PROPERTY VALUE ${USR_DIR})
