@@ -93,7 +93,7 @@ FetchContent_Declare(json
 
 FetchContent_Declare(cppy3 
   GIT_REPOSITORY https://github.com/pbosetti/cppy3.git
-  GIT_TAG        main
+  GIT_TAG        2.0.0
   GIT_SHALLOW    TRUE
   EXCLUDE_FROM_ALL
 )
