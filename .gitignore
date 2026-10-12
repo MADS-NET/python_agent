@@ -3,3 +3,4 @@
 venv
 checks.json
 imgui.ini
+.DS_Store
