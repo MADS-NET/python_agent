@@ -3,16 +3,7 @@
 
 # MADS Monolithic Python Interpreter
 
-## Package install
-
-with MADS v2.3.0 or later, install with:
-
-```bash
-mads package --install mads-python
-```
-
-> **NOTE** that this is installing a bundled and portable Python interpreter, which is **not** the same as the system Python or a venv Python. If you rather prefer to use your own Python installation, you have to compile the plugin from source. See below for details.
-
+> **ABI compatibility**: Different MADS versions may have different [ABI](https://en.wikipedia.org/wiki/Application_binary_interface), so whenever you upgrade MADS, you should also recompile (and re-install) the Python agent plugin.
 
 ## Compilation
 

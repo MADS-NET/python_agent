@@ -41,12 +41,19 @@ else()
   endif()
 endif()
 file(TO_CMAKE_PATH "${MADS_PREFIX}" MADS_PREFIX)
-if(NOT EXISTS "${MADS_PREFIX}/include/agent.hpp")
-  message(FATAL_ERROR "Could not find MADS headers in ${MADS_PREFIX}/include")
-endif()
 message(STATUS "MADS_PREFIX: ${MADS_PREFIX}")
-include_directories("${MADS_PREFIX}/include")
-link_directories("${MADS_PREFIX}/lib")
+# Only look into MADS_PREFIX, so that we never pick up a different MADS install
+# than the one `mads -p` (or MADS_ROOT) points to.
+find_package(Mads 2.5 CONFIG REQUIRED PATHS "${MADS_PREFIX}" NO_DEFAULT_PATH)
+message(STATUS "Mads version: ${Mads_VERSION} (${Mads_DIR})")
+# nlohmann/json, toml++, cxxopts and rang are taken from the MADS install, so
+# that this agent is compiled against the very same headers as libMadsCore.
+get_target_property(MADS_INCLUDE_DIR Mads::Mads INTERFACE_INCLUDE_DIRECTORIES)
+foreach(_mads_hdr agent.hpp nlohmann/json.hpp toml++/toml.hpp cxxopts.hpp rang.hpp)
+  if(NOT EXISTS "${MADS_INCLUDE_DIR}/${_mads_hdr}")
+    message(FATAL_ERROR "MADS install in ${MADS_INCLUDE_DIR} does not provide ${_mads_hdr}")
+  endif()
+endforeach()
 if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
   set_property(CACHE CMAKE_INSTALL_PREFIX PROPERTY VALUE "${MADS_PREFIX}")
 endif()
@@ -70,38 +77,9 @@ Required when PYTHON_AGENT_BUNDLE_PYTHON=ON.")
 
 # DEPENDENCIES #################################################################
 include(FetchContent)
-FetchContent_Declare(cxxopts
-  GIT_REPOSITORY https://github.com/jarro2783/cxxopts.git
-  GIT_TAG        v3.1.1
-  GIT_SHALLOW    TRUE
-  EXCLUDE_FROM_ALL
-)
-
-FetchContent_Declare(toml
-  GIT_REPOSITORY https://github.com/pbosetti/tomlplusplus.git
-  GIT_TAG        050c7a0
-  GIT_SHALLOW    TRUE
-  EXCLUDE_FROM_ALL
-)
-
-set(BUILD_TESTING OFF CACHE INTERNAL "")
-set(JSON_BuildTests OFF CACHE INTERNAL "")
-FetchContent_Declare(json
-  URL https://github.com/nlohmann/json/releases/download/v3.12.0/json.tar.xz
-  DOWNLOAD_EXTRACT_TIMESTAMP TRUE
-)
-
-FetchContent_Declare(cppy3 
+FetchContent_Declare(cppy3
   GIT_REPOSITORY https://github.com/pbosetti/cppy3.git
   GIT_TAG        2.0.0
-  GIT_SHALLOW    TRUE
-  EXCLUDE_FROM_ALL
-)
-
-
-FetchContent_Declare(rang
-  GIT_REPOSITORY https://github.com/pbosetti/rang.git
-  GIT_TAG        HEAD
   GIT_SHALLOW    TRUE
   EXCLUDE_FROM_ALL
 )
@@ -138,7 +116,7 @@ if(PYTHON_AGENT_BUNDLE_PYTHON)
   message(STATUS "PYTHON_AGENT_BUNDLE_PYTHON: ON, using ${PYTHON_BUNDLE_DIR}")
 endif()
 
-FetchContent_MakeAvailable(cxxopts toml json cppy3 rang)
+FetchContent_MakeAvailable(cppy3)
 
 if(NOT PYTHON_AGENT_BUNDLE_PYTHON
     AND WIN32 AND EXISTS "${CMAKE_CURRENT_LIST_DIR}/.venv/Scripts/python.exe")
@@ -165,18 +143,7 @@ endif()
 include_directories(
   ${SRC_DIR}
   ${Python3_INCLUDE_DIRS}
-  ${toml_SOURCE_DIR}/include
-  ${rang_SOURCE_DIR}/include
-  ${cxxopts_SOURCE_DIR}/include
-  ${json_SOURCE_DIR}/include
 )
-if(WIN32)
-  # Prefer fetched headers over any versions shipped in MADS include paths.
-  include_directories(BEFORE
-    ${toml_SOURCE_DIR}/include
-    ${cxxopts_SOURCE_DIR}/include
-  )
-endif()
 
 if(UNIX)
   add_compile_options(-Wno-deprecated-literal-operator)
@@ -204,10 +171,9 @@ endif()
 if(WIN32)
   # Prevent legacy winsock.h declarations from conflicting with winsock2.h.
   target_compile_definitions(python_agent PRIVATE _WINSOCKAPI_)
-  link_directories("${MADS_PREFIX}/lib" "${MADS_PREFIX}/bin")
-  target_link_libraries(python_agent PRIVATE cppy3::cppy3 Python3::Python Ws2_32 bcrypt Secur32 Crypt32 Dnsapi IPHLPAPI MadsCore)
+  target_link_libraries(python_agent PRIVATE cppy3::cppy3 Python3::Python Ws2_32 bcrypt Secur32 Crypt32 Dnsapi IPHLPAPI Mads::Mads)
 else()
-  target_link_libraries(python_agent PRIVATE cppy3::cppy3 MadsCore)
+  target_link_libraries(python_agent PRIVATE cppy3::cppy3 Mads::Mads)
 endif()
 set_target_properties(python_agent PROPERTIES
   OUTPUT_NAME mads-python

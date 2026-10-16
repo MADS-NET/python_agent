@@ -12,7 +12,7 @@ FetchContent_MakeAvailable(Catch2)
 list(APPEND CMAKE_MODULE_PATH ${catch2_SOURCE_DIR}/extras)
 
 add_executable(python_agent_tests test_python_interpreter.cpp)
-target_link_libraries(python_agent_tests PRIVATE cppy3::cppy3 Catch2::Catch2WithMain)
+target_link_libraries(python_agent_tests PRIVATE cppy3::cppy3 Mads::Mads Catch2::Catch2WithMain)
 target_compile_definitions(python_agent_tests PRIVATE
   PYTHON_AGENT_TEST_FIXTURE_DIR="${CMAKE_CURRENT_SOURCE_DIR}/fixtures"
 )
